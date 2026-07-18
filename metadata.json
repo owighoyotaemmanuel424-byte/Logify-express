@@ -1,0 +1,6 @@
+{
+  "name": "Logify Logistics",
+  "description": "Logify Logistics is a modern full-stack logistics and delivery management platform featuring real-time tracking, customer quoting, user dashboard, driver portal, and an advanced AI-powered admin routing panel.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
