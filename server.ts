@@ -100,7 +100,7 @@ function verifyAdmin(req: any, res: any, next: any) {
   if (!decoded) {
     return res.status(401).json({ error: "Unauthorized: Invalid or expired token" });
   }
-  if (decoded.role !== "admin" || decoded.email !== "admin@logify.com") {
+  if (decoded.role !== "super_admin" || decoded.email !== "expresslogify@gmail.com") {
     return res.status(403).json({ error: "Forbidden: Admin access only" });
   }
   req.user = decoded;
@@ -121,7 +121,11 @@ function readDB(): DBState {
     const parsed = JSON.parse(content) as DBState;
     if (parsed.users) {
       parsed.users.forEach(u => {
-        u.role = "admin";
+        if (u.email.toLowerCase() === "expresslogify@gmail.com") {
+          u.role = "super_admin";
+        } else {
+          u.role = "admin";
+        }
       });
     }
     return parsed;
@@ -178,6 +182,7 @@ function seedDatabase(): DBState {
 
   // Seed default users
   const seedUsers = [
+    { id: "super-admin-1", email: "expresslogify@gmail.com", name: "Logify Super Admin", role: "super_admin" as const, phone: "+1 555-9999" },
     { id: "admin-1", email: "sarah@logify.com", name: "Sarah Jenkins (Admin)", role: "admin" as const, phone: "+1 555-0100" },
     { id: "user-1", email: "client@logify.com", name: "Alex Mercer (Client)", role: "admin" as const, phone: "+1 555-0101" },
     { id: "driver-1", email: "courier@logify.com", name: "John Doe (Van Driver)", role: "admin" as const, phone: "+1 555-0102" },
@@ -413,8 +418,8 @@ const handleLoginRequest = async (req: any, res: any) => {
         return res.status(401).json({ error: `Supabase login failed: ${error.message}` });
       }
 
-      // Hard restriction: Only permit admin@logify.com
-      const isUserAdmin = normalizedEmail === "admin@logify.com";
+      // Hard restriction: Only permit expresslogify@gmail.com
+      const isUserAdmin = normalizedEmail === "expresslogify@gmail.com";
 
       if (!isUserAdmin) {
         // Sign out unauthorized user immediately
@@ -433,7 +438,7 @@ const handleLoginRequest = async (req: any, res: any) => {
           id: data.user?.id || `user-${Math.floor(1000 + Math.random() * 9000)}`,
           email: normalizedEmail,
           name: data.user?.user_metadata?.name || normalizedEmail.split("@")[0],
-          role: "admin",
+          role: "super_admin",
           status: "active",
           phone: data.user?.user_metadata?.phone || "",
           passwordHash,
@@ -441,6 +446,9 @@ const handleLoginRequest = async (req: any, res: any) => {
           createdAt: new Date().toISOString(),
         };
         db.users.push(user);
+        writeDB(db);
+      } else if (user.role !== "super_admin") {
+        user.role = "super_admin";
         writeDB(db);
       }
       
@@ -456,7 +464,7 @@ const handleLoginRequest = async (req: any, res: any) => {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    const isUserAdmin = normalizedEmail === "admin@logify.com";
+    const isUserAdmin = normalizedEmail === "expresslogify@gmail.com";
     if (!isUserAdmin) {
       return res.status(403).json({ error: "Unauthorized access." });
     }
@@ -468,6 +476,11 @@ const handleLoginRequest = async (req: any, res: any) => {
     const inputHash = hashPassword(password, user.salt);
     if (inputHash !== user.passwordHash && password !== "password123") {
       return res.status(401).json({ error: "Invalid email or password" });
+    }
+
+    if (user.role !== "super_admin") {
+      user.role = "super_admin";
+      writeDB(db);
     }
 
     const token = generateToken({ id: user.id, email: user.email, role: user.role });

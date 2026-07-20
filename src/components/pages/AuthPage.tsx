@@ -23,10 +23,10 @@ export default function AuthPage({ onLoginSuccess, onNavigate }: AuthPageProps) 
       if (params.get('expired') === 'true') {
         setError('Session expired. Please log in again.');
         // Clean URL parameter
-        window.history.replaceState(null, '', '/login');
+        window.history.replaceState(null, '', '/admin/login');
       } else if (params.get('unauthorized') === 'true') {
         setError('Unauthorized access. Only authorized administrators are permitted to enter this workspace.');
-        window.history.replaceState(null, '', '/login');
+        window.history.replaceState(null, '', '/admin/login');
       }
     } catch (e) {}
   }, []);
@@ -37,8 +37,6 @@ export default function AuthPage({ onLoginSuccess, onNavigate }: AuthPageProps) 
     setError(null);
     setSuccessMsg(null);
 
-    // Strict client-side protection: hard restrict domain or specific admin email if requested
-    // Let's allow either admin@logify.com or a valid @logify.com account.
     const normalizedEmail = email.trim().toLowerCase();
     
     try {
@@ -54,14 +52,13 @@ export default function AuthPage({ onLoginSuccess, onNavigate }: AuthPageProps) 
         throw new Error(data.error || 'Invalid credentials or connection issue.');
       }
 
-      // Check if user is an authorized admin email
-      const isAdmin = normalizedEmail === 'admin@logify.com';
+      // Check if user is an authorized admin email and has appropriate role
+      const isAdmin = normalizedEmail === 'expresslogify@gmail.com' && (
+        data.user?.role === 'super_admin' || data.user?.role === 'admin'
+      );
 
       if (!isAdmin) {
-        // Silently deflect unauthorized user back to main landing page
-        window.history.replaceState(null, '', '/');
-        window.location.href = '/';
-        return;
+        throw new Error('Unauthorized access. Only authenticated users with super_admin role can access the administration dashboard.');
       }
 
       setSuccessMsg('Authentication verified. Accessing secure dashboard...');
@@ -114,7 +111,7 @@ export default function AuthPage({ onLoginSuccess, onNavigate }: AuthPageProps) 
             <input
               type="email"
               required
-              placeholder="e.g. admin@logify.com"
+              placeholder="e.g. expresslogify@gmail.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition-all text-slate-900 dark:text-white"

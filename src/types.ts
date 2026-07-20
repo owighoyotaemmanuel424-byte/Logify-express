@@ -2,7 +2,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'user' | 'driver';
+  role: 'admin' | 'user' | 'driver' | 'super_admin';
   status: 'active' | 'suspended';
   phone: string;
   passwordHash: string;
