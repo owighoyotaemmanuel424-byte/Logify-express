@@ -100,7 +100,7 @@ function verifyAdmin(req: any, res: any, next: any) {
   if (!decoded) {
     return res.status(401).json({ error: "Unauthorized: Invalid or expired token" });
   }
-  if (decoded.role !== "admin") {
+  if (decoded.role !== "admin" || decoded.email !== "admin@logify.com") {
     return res.status(403).json({ error: "Forbidden: Admin access only" });
   }
   req.user = decoded;
@@ -391,61 +391,7 @@ app.get("/api/shipments/track/:id", trackingRateLimiter, (req, res) => {
 
 // Admin-Only & Auth Login/Register Routes with Supabase Support
 app.post("/api/auth/register", async (req, res) => {
-  const { email, password, name, phone } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ error: "Missing email or password" });
-  }
-
-  try {
-    const db = readDB();
-    const existingUser = db.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-    if (existingUser) {
-      return res.status(400).json({ error: "User already exists with this email address" });
-    }
-
-    // If Supabase is active, register in Supabase
-    if (supabase) {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name: name || email.split("@")[0],
-            phone: phone || "",
-          }
-        }
-      });
-      if (error) {
-        return res.status(400).json({ error: `Supabase registration failed: ${error.message}` });
-      }
-    }
-
-    // Create local record for state synchronization and local fallback compatibility
-    const salt = crypto.randomBytes(16).toString("hex");
-    const passwordHash = hashPassword(password, salt);
-    const newUser: User = {
-      id: `user-${Math.floor(1000 + Math.random() * 9000)}`,
-      email: email.toLowerCase(),
-      name: name || email.split("@")[0],
-      role: "admin",
-      status: "active",
-      phone: phone || "",
-      passwordHash,
-      salt,
-      createdAt: new Date().toISOString(),
-    };
-
-    db.users.push(newUser);
-    writeDB(db);
-
-    const token = generateToken({ id: newUser.id, email: newUser.email, role: newUser.role });
-    const { passwordHash: _, salt: __, ...userResponse } = newUser;
-
-    res.json({ message: "Registration successful!", user: userResponse, token });
-  } catch (err: any) {
-    console.error("Registration exception:", err);
-    res.status(500).json({ error: "Registration service failure: " + err.message });
-  }
+  return res.status(403).json({ error: "Registration is strictly disabled in this workspace. Administrative access only." });
 });
 
 const handleLoginRequest = async (req: any, res: any) => {
@@ -454,28 +400,39 @@ const handleLoginRequest = async (req: any, res: any) => {
     return res.status(400).json({ error: "Missing email or password" });
   }
 
+  const normalizedEmail = email.trim().toLowerCase();
+
   try {
     // If Supabase is active, sign in with Supabase
     if (supabase) {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: normalizedEmail,
         password,
       });
       if (error) {
         return res.status(401).json({ error: `Supabase login failed: ${error.message}` });
       }
+
+      // Hard restriction: Only permit admin@logify.com
+      const isUserAdmin = normalizedEmail === "admin@logify.com";
+
+      if (!isUserAdmin) {
+        // Sign out unauthorized user immediately
+        await supabase.auth.signOut();
+        return res.status(403).json({ error: "Unauthorized access." });
+      }
       
       // Sync or retrieve user from local database
       const db = readDB();
-      let user = db.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+      let user = db.users.find((u) => u.email.toLowerCase() === normalizedEmail);
       if (!user) {
         // If not found locally, create a local record for consistency across screens
         const salt = crypto.randomBytes(16).toString("hex");
         const passwordHash = hashPassword(password, salt);
         user = {
           id: data.user?.id || `user-${Math.floor(1000 + Math.random() * 9000)}`,
-          email: email.toLowerCase(),
-          name: data.user?.user_metadata?.name || email.split("@")[0],
+          email: normalizedEmail,
+          name: data.user?.user_metadata?.name || normalizedEmail.split("@")[0],
           role: "admin",
           status: "active",
           phone: data.user?.user_metadata?.phone || "",
@@ -492,15 +449,16 @@ const handleLoginRequest = async (req: any, res: any) => {
       return res.json({ user: userResponse, token });
     }
 
-    // Otherwise, use local database
+    // Otherwise, use local database fallback
     const db = readDB();
-    const user = db.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+    const user = db.users.find((u) => u.email.toLowerCase() === normalizedEmail);
     if (!user) {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    if (user.role !== "admin") {
-      return res.status(403).json({ error: "Forbidden: Admin access only" });
+    const isUserAdmin = normalizedEmail === "admin@logify.com";
+    if (!isUserAdmin) {
+      return res.status(403).json({ error: "Unauthorized access." });
     }
 
     if (user.status === "suspended") {

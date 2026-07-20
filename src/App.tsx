@@ -108,7 +108,18 @@ export default function App() {
       });
       if (response.ok) {
         const uData = await response.json();
-        setUser(uData);
+        const uEmail = uData?.email?.trim().toLowerCase();
+        if (uEmail && uEmail !== 'admin@logify.com') {
+          // Immediately sign out and silently redirect to the homepage
+          localStorage.removeItem('logify_token');
+          document.cookie = `logify_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; Secure`;
+          setToken(null);
+          setUser(null);
+          window.history.replaceState(null, '', '/');
+          setView('home');
+        } else {
+          setUser(uData);
+        }
       } else {
         // Stale or invalid token
         handleLogout(true);
@@ -134,14 +145,16 @@ export default function App() {
       setView('about');
     } else if (path === '/contact') {
       setView('contact');
-    } else if (path === '/login' || path === '/register' || path === '/auth' || path === '/admin-login') {
+    } else if (path === '/secure-admin-portal-9x7k') {
       setView('auth');
-    } else if (path === '/admin/login') {
-      setView('auth');
+    } else if (path === '/login' || path === '/register' || path === '/auth' || path === '/admin-login' || path === '/admin/login') {
+      // Secretly deflect any user trying public standard paths to the main landing page
+      window.history.replaceState(null, '', '/');
+      setView('home');
     } else if (path === '/admin' || path.startsWith('/admin/')) {
       const storedToken = localStorage.getItem('logify_token');
       if (!storedToken) {
-        window.history.replaceState(null, '', '/login');
+        window.history.replaceState(null, '', '/secure-admin-portal-9x7k');
         setView('auth');
       } else {
         setView('admin');
@@ -192,7 +205,7 @@ export default function App() {
     setUser(null);
     
     if (expired) {
-      window.history.pushState(null, '', '/login?expired=true');
+      window.history.pushState(null, '', '/secure-admin-portal-9x7k?expired=true');
       setView('auth');
     } else {
       window.history.pushState(null, '', '/');
@@ -209,12 +222,11 @@ export default function App() {
     else if (newView === 'pricing') path = '/pricing';
     else if (newView === 'about') path = '/about';
     else if (newView === 'contact') path = '/contact';
-    else if (newView === 'auth' || newView === 'login' || newView === 'register' || newView === 'admin-login') {
-      path = '/login';
-      newView = 'auth';
+    else if (newView === 'auth') {
+      path = '/secure-admin-portal-9x7k';
     } else if (newView === 'admin') {
       if (!token) {
-        path = '/login';
+        path = '/secure-admin-portal-9x7k';
         newView = 'auth';
       } else {
         path = '/admin';
@@ -447,15 +459,7 @@ export default function App() {
             ESTIMATED COMPLETION: <span className="text-[#ff7a1a] font-bold">15 MIN</span>
           </div>
 
-          <div className="pt-4 border-t border-neutral-800 flex flex-col gap-2">
-            <button
-              onClick={() => handleNavigate('admin-login')}
-              className="w-full py-2.5 bg-[#ff7a1a]/10 hover:bg-[#ff7a1a]/20 border border-[#ff7a1a]/20 text-white font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 text-xs font-sans"
-            >
-              <Lock size={12} className="text-[#ff7a1a]" />
-              Authorized Staff Login
-            </button>
-          </div>
+
         </div>
       </div>
     );

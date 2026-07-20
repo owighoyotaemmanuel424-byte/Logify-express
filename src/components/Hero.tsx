@@ -115,7 +115,7 @@ export default function Hero({ onNavigate, onSetTrackId }: HeroProps) {
               {/* Card 3: Logify for Business */}
               <motion.button
                 whileHover={{ y: -4, borderColor: '#FFCC00' }}
-                onClick={() => onNavigate('auth')}
+                onClick={() => onNavigate('contact')}
                 className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-xl shadow-sm text-left flex items-start gap-4 transition-all hover:shadow-md group cursor-pointer"
                 id="action-card-logify-business"
               >

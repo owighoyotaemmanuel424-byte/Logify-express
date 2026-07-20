@@ -83,7 +83,7 @@ export default function Navbar({
               {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
             </button>
 
-            {user ? (
+            {user && (
               <div className="flex items-center gap-2.5">
                 <button
                   onClick={() => onNavigate('admin')}
@@ -100,14 +100,6 @@ export default function Navbar({
                   Log Out
                 </button>
               </div>
-            ) : (
-              <button
-                onClick={() => onNavigate('auth')}
-                className="flex items-center gap-1.5 px-4 py-2 bg-[#D40511] hover:bg-[#b8000e] text-white text-xs font-black rounded-lg shadow-sm transition-colors cursor-pointer"
-              >
-                <LogIn size={14} />
-                Client Access
-              </button>
             )}
           </div>
 
@@ -148,40 +140,28 @@ export default function Navbar({
               {item.label}
             </button>
           ))}
-          <div className="pt-4 border-t border-slate-100 dark:border-slate-850 flex flex-col gap-2">
-            {user ? (
-              <>
-                <button
-                  onClick={() => {
-                    setIsOpen(false);
-                    onNavigate('admin');
-                  }}
-                  className="w-full py-2.5 bg-[#D40511] hover:bg-[#b8000e] text-white text-xs font-bold rounded-lg text-center shadow-sm cursor-pointer"
-                >
-                  Dashboard
-                </button>
-                <button
-                  onClick={() => {
-                    setIsOpen(false);
-                    onLogout();
-                  }}
-                  className="w-full py-2.5 border border-slate-200 dark:border-slate-850 text-slate-600 dark:text-slate-300 text-xs font-bold rounded-lg text-center cursor-pointer"
-                >
-                  Log Out
-                </button>
-              </>
-            ) : (
+          {user && (
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-850 flex flex-col gap-2">
               <button
                 onClick={() => {
                   setIsOpen(false);
-                  onNavigate('auth');
+                  onNavigate('admin');
                 }}
-                className="w-full py-2.5 bg-[#D40511] hover:bg-[#b8000e] text-white text-xs font-black uppercase rounded-lg text-center shadow-sm cursor-pointer"
+                className="w-full py-2.5 bg-[#D40511] hover:bg-[#b8000e] text-white text-xs font-bold rounded-lg text-center shadow-sm cursor-pointer"
               >
-                Client Access
+                Dashboard
               </button>
-            )}
-          </div>
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  onLogout();
+                }}
+                className="w-full py-2.5 border border-slate-200 dark:border-slate-850 text-slate-600 dark:text-slate-300 text-xs font-bold rounded-lg text-center cursor-pointer"
+              >
+                Log Out
+              </button>
+            </div>
+          )}
         </div>
       )}
     </nav>
