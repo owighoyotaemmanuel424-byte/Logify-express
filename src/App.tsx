@@ -18,7 +18,23 @@ export default function App() {
   const [trackId, setTrackId] = useState<string>('');
   
   // Auth state
-  const [token, setToken] = useState<string | null>(localStorage.getItem('logify_token'));
+  const [token, setToken] = useState<string | null>(() => {
+    try {
+      const stored = localStorage.getItem('logify_token');
+      if (stored) return stored;
+      
+      // Fallback to cookie for robust mobile/Safari session persistence
+      const cookieMatch = document.cookie.match(/(^|;)\s*logify_token\s*=\s*([^;]+)/);
+      if (cookieMatch) {
+        const decoded = decodeURIComponent(cookieMatch[2]);
+        localStorage.setItem('logify_token', decoded);
+        return decoded;
+      }
+    } catch (e) {
+      console.warn('Failed to retrieve authentication token:', e);
+    }
+    return null;
+  });
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
 
@@ -95,10 +111,10 @@ export default function App() {
         setUser(uData);
       } else {
         // Stale or invalid token
-        handleLogout();
+        handleLogout(true);
       }
     } catch (err) {
-      handleLogout();
+      handleLogout(true);
     } finally {
       setAuthLoading(false);
     }
@@ -148,7 +164,15 @@ export default function App() {
   }, [token]);
 
   const handleLoginSuccess = (authToken: string, loggedUser: User) => {
-    localStorage.setItem('logify_token', authToken);
+    try {
+      localStorage.setItem('logify_token', authToken);
+      // Set backup cookie (7 days) for Safari / iPhone reliability
+      const expires = new Date(Date.now() + 7 * 864e5).toUTCString();
+      document.cookie = `logify_token=${encodeURIComponent(authToken)}; expires=${expires}; path=/; SameSite=Lax; Secure`;
+    } catch (e) {
+      console.warn('Failed to persist auth token:', e);
+    }
+    
     setToken(authToken);
     setUser(loggedUser);
     
@@ -157,12 +181,23 @@ export default function App() {
     setView('admin');
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('logify_token');
+  const handleLogout = (expired = false) => {
+    try {
+      localStorage.removeItem('logify_token');
+      document.cookie = `logify_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; Secure`;
+    } catch (e) {
+      console.warn('Failed to clear auth token persistence:', e);
+    }
     setToken(null);
     setUser(null);
-    window.history.pushState(null, '', '/');
-    setView('home');
+    
+    if (expired) {
+      window.history.pushState(null, '', '/login?expired=true');
+      setView('auth');
+    } else {
+      window.history.pushState(null, '', '/');
+      setView('home');
+    }
   };
 
   // Handle direct navigation
@@ -192,142 +227,6 @@ export default function App() {
     setView(newView);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
-  // Login component inner controller
-  function LoginPage() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [err, setErr] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
-      setLoading(true);
-      setErr(null);
-      try {
-        const response = await fetch('/api/admin/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        });
-
-        if (!response.ok) {
-          const body = await response.json();
-          throw new Error(body.error || 'Invalid credentials');
-        }
-
-        const data = await response.json();
-        handleLoginSuccess(data.token, data.user);
-      } catch (e: any) {
-        setErr(e.message || 'Server connection issue.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const handleQuickLogin = async (quickEmail: string) => {
-      setLoading(true);
-      setErr(null);
-      try {
-        const response = await fetch('/api/admin/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: quickEmail, password: 'password123' }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          handleLoginSuccess(data.token, data.user);
-        } else {
-          throw new Error('Quick login node stale.');
-        }
-      } catch (e: any) {
-        setErr(e.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    return (
-      <div className="max-w-md mx-auto my-16 px-4">
-        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
-          <div className="text-center space-y-2">
-            <Lock className="mx-auto text-amber-500" size={32} />
-            <h2 className="text-2xl font-sans font-black text-slate-900 dark:text-white">Workspace Sign In</h2>
-            <p className="text-xs text-slate-500">Access your logistics telemetry waybills and invoices.</p>
-          </div>
-
-          {err && <div className="p-3 bg-rose-50 text-rose-700 rounded-xl text-xs font-semibold">{err}</div>}
-
-          <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-            <div className="space-y-1">
-              <label className="text-[10px] text-slate-400 uppercase font-bold">Email Address</label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="e.g. sarah@logify.com"
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-950 dark:text-white outline-none"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] text-slate-400 uppercase font-bold">Account Password</label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-950 dark:text-white outline-none"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3.5 bg-slate-950 text-white dark:bg-amber-500 dark:text-slate-950 font-bold text-xs rounded-xl shadow-lg hover:opacity-95 flex items-center justify-center gap-1.5 transition-all"
-            >
-              {loading && <Loader2 size={13} className="animate-spin" />}
-              Authorize Workspace Access
-            </button>
-          </form>
-
-          {/* Quick Sandbox Logins */}
-          <div className="pt-4 border-t border-slate-100 dark:border-slate-800/80 space-y-2.5">
-            <h4 className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center">Reviewer Quick-Access Roster</h4>
-            <div className="grid grid-cols-1 gap-2">
-              <button
-                onClick={() => handleQuickLogin('sarah@logify.com')}
-                className="p-2.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl text-left flex items-center justify-between text-[11px] font-bold text-slate-700 dark:text-slate-200"
-              >
-                <span>Manager Sarah <span className="text-[9px] text-slate-400 font-mono font-normal">(Admin Access)</span></span>
-                <ArrowRight size={12} className="text-amber-500" />
-              </button>
-
-              <button
-                onClick={() => handleQuickLogin('courier@logify.com')}
-                className="p-2.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl text-left flex items-center justify-between text-[11px] font-bold text-slate-700 dark:text-slate-200"
-              >
-                <span>Courier Robert <span className="text-[9px] text-slate-400 font-mono font-normal">(Admin Access)</span></span>
-                <ArrowRight size={12} className="text-amber-500" />
-              </button>
-
-              <button
-                onClick={() => handleQuickLogin('client@logify.com')}
-                className="p-2.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl text-left flex items-center justify-between text-[11px] font-bold text-slate-700 dark:text-slate-200"
-              >
-                <span>Client Alice <span className="text-[9px] text-slate-400 font-mono font-normal">(Admin Access)</span></span>
-                <ArrowRight size={12} className="text-amber-500" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
 
 
   // Services informational page

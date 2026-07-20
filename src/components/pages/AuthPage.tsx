@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Lock, Mail, Phone, User, ArrowRight, Loader2, Sparkles, CheckSquare, EyeOff, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Lock, Mail, Phone, User, ArrowRight, Loader2, ShieldCheck, EyeOff, KeyRound } from 'lucide-react';
 
 interface AuthPageProps {
   onLoginSuccess: (token: string, user: any) => void;
@@ -7,12 +7,30 @@ interface AuthPageProps {
 }
 
 export default function AuthPage({ onLoginSuccess, onNavigate }: AuthPageProps) {
+  const [isSignUp, setIsSignUp] = useState(false);
+  
+  // Form fields
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   
+  // UI states
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  // Check for expired session query parameter
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('expired') === 'true') {
+        setError('Session expired. Please log in again.');
+        // Clean URL parameter
+        window.history.replaceState(null, '', '/login');
+      }
+    } catch (e) {}
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,45 +38,55 @@ export default function AuthPage({ onLoginSuccess, onNavigate }: AuthPageProps) 
     setError(null);
     setSuccessMsg(null);
     
-    try {
-      // Standard Login
-      const response = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!response.ok) {
-        const body = await response.json();
-        throw new Error(body.error || 'Invalid credentials');
-      }
-
-      const data = await response.json();
-      onLoginSuccess(data.token, data.user);
-    } catch (e: any) {
-      setError(e.message || 'Authentication node communication error.');
+    // Validations
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
       setLoading(false);
+      return;
     }
-  };
 
-  const handleQuickLogin = async (quickEmail: string) => {
-    setLoading(true);
-    setError(null);
     try {
-      const response = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: quickEmail, password: 'password123' }),
-      });
+      if (isSignUp) {
+        // Sign Up Flow
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, name, phone }),
+        });
 
-      if (response.ok) {
         const data = await response.json();
-        onLoginSuccess(data.token, data.user);
+        if (!response.ok) {
+          throw new Error(data.error || 'Registration failed. Please check your network or try a different email.');
+        }
+
+        setSuccessMsg('Registration successful! Accessing workspace...');
+        
+        // Auto sign-in
+        setTimeout(() => {
+          onLoginSuccess(data.token, data.user);
+        }, 1500);
+
       } else {
-        throw new Error('Quick login node stale.');
+        // Sign In Flow
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Invalid credentials or connection issue.');
+        }
+
+        setSuccessMsg('Authentication verified. Welcome back!');
+        
+        setTimeout(() => {
+          onLoginSuccess(data.token, data.user);
+        }, 1000);
       }
     } catch (e: any) {
-      setError(e.message);
+      setError(e.message || 'Authentication service communication error.');
       setLoading(false);
     }
   };
@@ -73,11 +101,48 @@ export default function AuthPage({ onLoginSuccess, onNavigate }: AuthPageProps) 
             <Lock size={20} />
           </div>
           <h2 className="text-xl font-sans font-black text-slate-900 dark:text-white uppercase tracking-tight">
-            Logify Staff & Admin Access
+            {isSignUp ? 'Create Staff Account' : 'Logify Workspace Access'}
           </h2>
           <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
-            Access real-time shipping telemetry, waybills, and fleet management panels. Only authorized administrators can log in.
+            {isSignUp 
+              ? 'Register a new administrative member to manage waybills, transit telemetry, and billing.'
+              : 'Access real-time shipping telemetry, waybills, and fleet management panels. Secure access only.'
+            }
           </p>
+        </div>
+
+        {/* Tab Switcher */}
+        <div className="flex bg-slate-100 dark:bg-slate-950 p-1 rounded-xl">
+          <button
+            type="button"
+            onClick={() => {
+              setIsSignUp(false);
+              setError(null);
+              setSuccessMsg(null);
+            }}
+            className={`flex-1 py-2 text-[11px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+              !isSignUp 
+                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' 
+                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+            }`}
+          >
+            Sign In
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setIsSignUp(true);
+              setError(null);
+              setSuccessMsg(null);
+            }}
+            className={`flex-1 py-2 text-[11px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+              isSignUp 
+                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' 
+                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+            }`}
+          >
+            Create Account
+          </button>
         </div>
 
         {error && (
@@ -88,13 +153,44 @@ export default function AuthPage({ onLoginSuccess, onNavigate }: AuthPageProps) 
 
         {successMsg && (
           <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30 rounded-xl text-xs font-bold flex items-center gap-1.5">
-            <ShieldCheck size={14} className="animate-pulse" />
+            <ShieldCheck size={14} className="animate-pulse text-emerald-500" />
             {successMsg}
           </div>
         )}
 
         {/* Auth form */}
         <form onSubmit={handleSubmit} className="space-y-4 text-xs font-sans">
+          {isSignUp && (
+            <>
+              <div className="space-y-1">
+                <label className="text-[10px] text-slate-400 uppercase font-bold tracking-wide flex items-center gap-1">
+                  <User size={12} className="text-blue-500" /> Full Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Sarah Jenkins"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition-all text-slate-900 dark:text-white"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] text-slate-400 uppercase font-bold tracking-wide flex items-center gap-1">
+                  <Phone size={12} className="text-blue-500" /> Phone Number
+                </label>
+                <input
+                  type="tel"
+                  placeholder="e.g. +1 555-0100"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition-all text-slate-900 dark:text-white"
+                />
+              </div>
+            </>
+          )}
+
           <div className="space-y-1">
             <label className="text-[10px] text-slate-400 uppercase font-bold tracking-wide flex items-center gap-1">
               <Mail size={12} className="text-blue-500" /> Email Address
@@ -111,7 +207,7 @@ export default function AuthPage({ onLoginSuccess, onNavigate }: AuthPageProps) 
 
           <div className="space-y-1">
             <label className="text-[10px] text-slate-400 uppercase font-bold tracking-wide flex items-center gap-1">
-              <EyeOff size={12} className="text-blue-500" /> Account Password
+              <KeyRound size={12} className="text-blue-500" /> Account Password
             </label>
             <input
               type="password"
@@ -129,34 +225,10 @@ export default function AuthPage({ onLoginSuccess, onNavigate }: AuthPageProps) 
             className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-blue-600/10 cursor-pointer"
           >
             {loading && <Loader2 size={13} className="animate-spin" />}
-            Sign In to Workspace
+            {isSignUp ? 'Create Workspace Account' : 'Sign In to Workspace'}
             <ArrowRight size={13} />
           </button>
         </form>
-
-        {/* Sandbox quick access logins */}
-        <div className="pt-4 border-t border-slate-100 dark:border-slate-850 space-y-2">
-          <h4 className="text-[9px] text-slate-400 font-black uppercase tracking-wider text-center">
-            Authorized Admin Credentials
-          </h4>
-          <div className="grid grid-cols-1 gap-2 text-xs">
-            <button
-              onClick={() => handleQuickLogin('sarah@logify.com')}
-              className="p-2.5 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-850 border border-slate-250/20 dark:border-slate-850 rounded-xl text-left flex items-center justify-between font-bold text-slate-700 dark:text-slate-300"
-            >
-              <span>Manager Sarah <span className="text-[9px] text-slate-400 font-mono font-normal">(sarah@logify.com)</span></span>
-              <ArrowRight size={12} className="text-blue-500" />
-            </button>
-
-            <button
-              onClick={() => handleQuickLogin('courier@logify.com')}
-              className="p-2.5 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-850 border border-slate-250/20 dark:border-slate-850 rounded-xl text-left flex items-center justify-between font-bold text-slate-700 dark:text-slate-300"
-            >
-              <span>Courier Robert <span className="text-[9px] text-slate-400 font-mono font-normal">(courier@logify.com)</span></span>
-              <ArrowRight size={12} className="text-blue-500" />
-            </button>
-          </div>
-        </div>
 
       </div>
     </div>

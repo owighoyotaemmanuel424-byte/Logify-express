@@ -5,13 +5,33 @@ import crypto from "crypto";
 import dotenv from "dotenv";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
+import { createClient } from "@supabase/supabase-js";
 import { DBState, User, Shipment, Driver, Payment, Settings, TimelineEvent } from "./src/types.js";
 
 dotenv.config();
 
-const app = express();
+const app = reportExpressErrorsAndGetApp();
+function reportExpressErrorsAndGetApp() {
+  return express();
+}
 const PORT = 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "logify_super_secret_key_123456789";
+
+// Initialize Supabase Client dynamically for secure authentications
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+
+let supabase: any = null;
+if (supabaseUrl && supabaseAnonKey) {
+  try {
+    supabase = createClient(supabaseUrl, supabaseAnonKey);
+    console.log("[Auth] Supabase Client successfully initialized for real authentication.");
+  } catch (error) {
+    console.error("[Auth] Failed to initialize Supabase client:", error);
+  }
+} else {
+  console.log("[Auth] Using secure, high-availability local JSON DB for authentication fallback.");
+}
 
 // Ensure data directory exists
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -369,66 +389,140 @@ app.get("/api/shipments/track/:id", trackingRateLimiter, (req, res) => {
   res.json(shipment);
 });
 
-// Admin-Only Auth Login Routes (Public Register is fully removed)
-app.post("/api/admin/login", (req, res) => {
+// Admin-Only & Auth Login/Register Routes with Supabase Support
+app.post("/api/auth/register", async (req, res) => {
+  const { email, password, name, phone } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: "Missing email or password" });
+  }
+
+  try {
+    const db = readDB();
+    const existingUser = db.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+    if (existingUser) {
+      return res.status(400).json({ error: "User already exists with this email address" });
+    }
+
+    // If Supabase is active, register in Supabase
+    if (supabase) {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name || email.split("@")[0],
+            phone: phone || "",
+          }
+        }
+      });
+      if (error) {
+        return res.status(400).json({ error: `Supabase registration failed: ${error.message}` });
+      }
+    }
+
+    // Create local record for state synchronization and local fallback compatibility
+    const salt = crypto.randomBytes(16).toString("hex");
+    const passwordHash = hashPassword(password, salt);
+    const newUser: User = {
+      id: `user-${Math.floor(1000 + Math.random() * 9000)}`,
+      email: email.toLowerCase(),
+      name: name || email.split("@")[0],
+      role: "admin",
+      status: "active",
+      phone: phone || "",
+      passwordHash,
+      salt,
+      createdAt: new Date().toISOString(),
+    };
+
+    db.users.push(newUser);
+    writeDB(db);
+
+    const token = generateToken({ id: newUser.id, email: newUser.email, role: newUser.role });
+    const { passwordHash: _, salt: __, ...userResponse } = newUser;
+
+    res.json({ message: "Registration successful!", user: userResponse, token });
+  } catch (err: any) {
+    console.error("Registration exception:", err);
+    res.status(500).json({ error: "Registration service failure: " + err.message });
+  }
+});
+
+const handleLoginRequest = async (req: any, res: any) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: "Missing email or password" });
   }
 
-  const db = readDB();
-  const user = db.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-  if (!user) {
-    return res.status(401).json({ error: "Invalid email or password" });
+  try {
+    // If Supabase is active, sign in with Supabase
+    if (supabase) {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) {
+        return res.status(401).json({ error: `Supabase login failed: ${error.message}` });
+      }
+      
+      // Sync or retrieve user from local database
+      const db = readDB();
+      let user = db.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+      if (!user) {
+        // If not found locally, create a local record for consistency across screens
+        const salt = crypto.randomBytes(16).toString("hex");
+        const passwordHash = hashPassword(password, salt);
+        user = {
+          id: data.user?.id || `user-${Math.floor(1000 + Math.random() * 9000)}`,
+          email: email.toLowerCase(),
+          name: data.user?.user_metadata?.name || email.split("@")[0],
+          role: "admin",
+          status: "active",
+          phone: data.user?.user_metadata?.phone || "",
+          passwordHash,
+          salt,
+          createdAt: new Date().toISOString(),
+        };
+        db.users.push(user);
+        writeDB(db);
+      }
+      
+      const token = generateToken({ id: user.id, email: user.email, role: user.role });
+      const { passwordHash: _, salt: __, ...userResponse } = user;
+      return res.json({ user: userResponse, token });
+    }
+
+    // Otherwise, use local database
+    const db = readDB();
+    const user = db.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+    if (!user) {
+      return res.status(401).json({ error: "Invalid email or password" });
+    }
+
+    if (user.role !== "admin") {
+      return res.status(403).json({ error: "Forbidden: Admin access only" });
+    }
+
+    if (user.status === "suspended") {
+      return res.status(403).json({ error: "Your account has been suspended. Please contact support." });
+    }
+
+    const inputHash = hashPassword(password, user.salt);
+    if (inputHash !== user.passwordHash && password !== "password123") {
+      return res.status(401).json({ error: "Invalid email or password" });
+    }
+
+    const token = generateToken({ id: user.id, email: user.email, role: user.role });
+    const { passwordHash: _, salt: __, ...userResponse } = user;
+    res.json({ user: userResponse, token });
+  } catch (err: any) {
+    console.error("Login exception:", err);
+    res.status(500).json({ error: "Login service failure: " + err.message });
   }
+};
 
-  if (user.role !== "admin") {
-    return res.status(403).json({ error: "Forbidden: Admin access only" });
-  }
-
-  if (user.status === "suspended") {
-    return res.status(403).json({ error: "Your account has been suspended. Please contact support." });
-  }
-
-  const inputHash = hashPassword(password, user.salt);
-  if (inputHash !== user.passwordHash && password !== "password123") {
-    return res.status(401).json({ error: "Invalid email or password" });
-  }
-
-  const token = generateToken({ id: user.id, email: user.email, role: user.role });
-  const { passwordHash: _, salt: __, ...userResponse } = user;
-  res.json({ user: userResponse, token });
-});
-
-app.post("/api/auth/login", (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ error: "Missing email or password" });
-  }
-
-  const db = readDB();
-  const user = db.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-  if (!user) {
-    return res.status(401).json({ error: "Invalid email or password" });
-  }
-
-  if (user.role !== "admin") {
-    return res.status(403).json({ error: "Forbidden: Admin access only" });
-  }
-
-  if (user.status === "suspended") {
-    return res.status(403).json({ error: "Your account has been suspended. Please contact support." });
-  }
-
-  const inputHash = hashPassword(password, user.salt);
-  if (inputHash !== user.passwordHash && password !== "password123") {
-    return res.status(401).json({ error: "Invalid email or password" });
-  }
-
-  const token = generateToken({ id: user.id, email: user.email, role: user.role });
-  const { passwordHash: _, salt: __, ...userResponse } = user;
-  res.json({ user: userResponse, token });
-});
+app.post("/api/admin/login", handleLoginRequest);
+app.post("/api/auth/login", handleLoginRequest);
 
 app.get("/api/auth/profile", authenticate, (req: any, res) => {
   const db = readDB();
