@@ -29,6 +29,20 @@ export default function AdminSettingsView({
   const [enableLiveChat, setEnableLiveChat] = useState(settings.enableLiveChat !== false);
   const [enableHighContrastStatus, setEnableHighContrastStatus] = useState(settings.enableHighContrastStatus === true);
   
+  // Tracking Page Feature Customizations
+  const [trackerShowMap, setTrackerShowMap] = useState(settings.trackerShowMap !== false);
+  const [trackerShowThermalTag, setTrackerShowThermalTag] = useState(settings.trackerShowThermalTag !== false);
+  const [trackerShowSmsAlerts, setTrackerShowSmsAlerts] = useState(settings.trackerShowSmsAlerts !== false);
+  const [trackerShowEmailAlerts, setTrackerShowEmailAlerts] = useState(settings.trackerShowEmailAlerts !== false);
+  const [trackerShowSimulation, setTrackerShowSimulation] = useState(settings.trackerShowSimulation !== false);
+  const [trackerShowTelemetryDeck, setTrackerShowTelemetryDeck] = useState(settings.trackerShowTelemetryDeck !== false);
+  const [trackerShowRouteVector, setTrackerShowRouteVector] = useState(settings.trackerShowRouteVector !== false);
+  const [trackerShowShareButton, setTrackerShowShareButton] = useState(settings.trackerShowShareButton !== false);
+  const [trackerShowEstimatedDelivery, setTrackerShowEstimatedDelivery] = useState(settings.trackerShowEstimatedDelivery !== false);
+  const [trackerShowChronologyLog, setTrackerShowChronologyLog] = useState(settings.trackerShowChronologyLog !== false);
+  const [trackerCustomBackgroundPreset, setTrackerCustomBackgroundPreset] = useState<'red-yellow' | 'slate' | 'emerald' | 'cosmic' | 'cyber'>(settings.trackerCustomBackgroundPreset || 'red-yellow');
+  const [trackerCustomNotes, setTrackerCustomNotes] = useState(settings.trackerCustomNotes || '');
+  
   // Admin Access / Password States
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -86,6 +100,18 @@ export default function AdminSettingsView({
         enableLiveChat,
         is2FAEnabled,
         enableHighContrastStatus,
+        trackerShowMap,
+        trackerShowThermalTag,
+        trackerShowSmsAlerts,
+        trackerShowEmailAlerts,
+        trackerShowSimulation,
+        trackerShowTelemetryDeck,
+        trackerShowRouteVector,
+        trackerShowShareButton,
+        trackerShowEstimatedDelivery,
+        trackerShowChronologyLog,
+        trackerCustomBackgroundPreset,
+        trackerCustomNotes,
       };
 
       const response = await fetch('/api/settings', {
@@ -405,6 +431,165 @@ export default function AdminSettingsView({
                       )}
                     </button>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* PUBLIC TRACKING CUSTOMIZATION BLOCK */}
+            <div className="bg-neutral-900/60 backdrop-blur-md border border-neutral-800/80 rounded-2xl p-5 sm:p-6 shadow-xl space-y-4">
+              <h3 className="text-sm font-black text-white flex items-center gap-2.5">
+                <SettingsIcon size={15} className="text-[#ff7a1a]" />
+                Public Tracking Page Feature Controls
+              </h3>
+              <p className="text-[10px] text-[#aaa] font-mono uppercase tracking-wider">
+                Enable or disable dynamic modules on the public tracking portal in real-time
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                {/* Map Toggle */}
+                <div className="flex items-center justify-between p-3 bg-neutral-950/40 border border-neutral-800/40 rounded-xl">
+                  <div className="space-y-0.5">
+                    <p className="font-bold text-white text-[11px]">Live GPS Telemetry Map</p>
+                    <p className="text-[9px] text-[#aaa]">Show live route and truck position</p>
+                  </div>
+                  <button type="button" onClick={() => setTrackerShowMap(!trackerShowMap)} className="focus:outline-none">
+                    {trackerShowMap ? <ToggleRight size={28} className="text-[#ff7a1a] cursor-pointer" /> : <ToggleLeft size={28} className="text-neutral-600 cursor-pointer" />}
+                  </button>
+                </div>
+
+                {/* Thermal Tag Toggle */}
+                <div className="flex items-center justify-between p-3 bg-neutral-950/40 border border-neutral-800/40 rounded-xl">
+                  <div className="space-y-0.5">
+                    <p className="font-bold text-white text-[11px]">Thermal Airbill Mockup</p>
+                    <p className="text-[9px] text-[#aaa]">Show printable digital package label</p>
+                  </div>
+                  <button type="button" onClick={() => setTrackerShowThermalTag(!trackerShowThermalTag)} className="focus:outline-none">
+                    {trackerShowThermalTag ? <ToggleRight size={28} className="text-[#ff7a1a] cursor-pointer" /> : <ToggleLeft size={28} className="text-neutral-600 cursor-pointer" />}
+                  </button>
+                </div>
+
+                {/* SMS alerts */}
+                <div className="flex items-center justify-between p-3 bg-neutral-950/40 border border-neutral-800/40 rounded-xl">
+                  <div className="space-y-0.5">
+                    <p className="font-bold text-white text-[11px]">SMS Alerts Dispatcher</p>
+                    <p className="text-[9px] text-[#aaa]">Show SLA SMS subscription card</p>
+                  </div>
+                  <button type="button" onClick={() => setTrackerShowSmsAlerts(!trackerShowSmsAlerts)} className="focus:outline-none">
+                    {trackerShowSmsAlerts ? <ToggleRight size={28} className="text-[#ff7a1a] cursor-pointer" /> : <ToggleLeft size={28} className="text-neutral-600 cursor-pointer" />}
+                  </button>
+                </div>
+
+                {/* Email Alerts */}
+                <div className="flex items-center justify-between p-3 bg-neutral-950/40 border border-neutral-800/40 rounded-xl">
+                  <div className="space-y-0.5">
+                    <p className="font-bold text-white text-[11px]">Email Alert Registry</p>
+                    <p className="text-[9px] text-[#aaa]">Show automated state change subscription</p>
+                  </div>
+                  <button type="button" onClick={() => setTrackerShowEmailAlerts(!trackerShowEmailAlerts)} className="focus:outline-none">
+                    {trackerShowEmailAlerts ? <ToggleRight size={28} className="text-[#ff7a1a] cursor-pointer" /> : <ToggleLeft size={28} className="text-neutral-600 cursor-pointer" />}
+                  </button>
+                </div>
+
+                {/* Simulated Transit */}
+                <div className="flex items-center justify-between p-3 bg-neutral-950/40 border border-neutral-800/40 rounded-xl">
+                  <div className="space-y-0.5">
+                    <p className="font-bold text-white text-[11px]">Simulated GPS Transit Engine</p>
+                    <p className="text-[9px] text-[#aaa]">Allow users to run transit animation</p>
+                  </div>
+                  <button type="button" onClick={() => setTrackerShowSimulation(!trackerShowSimulation)} className="focus:outline-none">
+                    {trackerShowSimulation ? <ToggleRight size={28} className="text-[#ff7a1a] cursor-pointer" /> : <ToggleLeft size={28} className="text-neutral-600 cursor-pointer" />}
+                  </button>
+                </div>
+
+                {/* Telemetry Sensor Deck */}
+                <div className="flex items-center justify-between p-3 bg-neutral-950/40 border border-neutral-800/40 rounded-xl">
+                  <div className="space-y-0.5">
+                    <p className="font-bold text-white text-[11px]">Starlink Hardware Deck</p>
+                    <p className="text-[9px] text-[#aaa]">Show Starlink ping/speed/sensor metrics</p>
+                  </div>
+                  <button type="button" onClick={() => setTrackerShowTelemetryDeck(!trackerShowTelemetryDeck)} className="focus:outline-none">
+                    {trackerShowTelemetryDeck ? <ToggleRight size={28} className="text-[#ff7a1a] cursor-pointer" /> : <ToggleLeft size={28} className="text-neutral-600 cursor-pointer" />}
+                  </button>
+                </div>
+
+                {/* Route Vector */}
+                <div className="flex items-center justify-between p-3 bg-neutral-950/40 border border-neutral-800/40 rounded-xl">
+                  <div className="space-y-0.5">
+                    <p className="font-bold text-white text-[11px]">Transit Route Vector Map</p>
+                    <p className="text-[9px] text-[#aaa]">Show point A to point B flow graphic</p>
+                  </div>
+                  <button type="button" onClick={() => setTrackerShowRouteVector(!trackerShowRouteVector)} className="focus:outline-none">
+                    {trackerShowRouteVector ? <ToggleRight size={28} className="text-[#ff7a1a] cursor-pointer" /> : <ToggleLeft size={28} className="text-neutral-600 cursor-pointer" />}
+                  </button>
+                </div>
+
+                {/* Share Button */}
+                <div className="flex items-center justify-between p-3 bg-neutral-950/40 border border-neutral-800/40 rounded-xl">
+                  <div className="space-y-0.5">
+                    <p className="font-bold text-white text-[11px]">Share Shipment Portal</p>
+                    <p className="text-[9px] text-[#aaa]">Enable "Share Shipment" modal trigger</p>
+                  </div>
+                  <button type="button" onClick={() => setTrackerShowShareButton(!trackerShowShareButton)} className="focus:outline-none">
+                    {trackerShowShareButton ? <ToggleRight size={28} className="text-[#ff7a1a] cursor-pointer" /> : <ToggleLeft size={28} className="text-neutral-600 cursor-pointer" />}
+                  </button>
+                </div>
+
+                {/* Estimated Delivery SLA */}
+                <div className="flex items-center justify-between p-3 bg-neutral-950/40 border border-neutral-800/40 rounded-xl">
+                  <div className="space-y-0.5">
+                    <p className="font-bold text-white text-[11px]">Guaranteed SLA Delivery Info</p>
+                    <p className="text-[9px] text-[#aaa]">Show ETA, carrier SLA compliance flags</p>
+                  </div>
+                  <button type="button" onClick={() => setTrackerShowEstimatedDelivery(!trackerShowEstimatedDelivery)} className="focus:outline-none">
+                    {trackerShowEstimatedDelivery ? <ToggleRight size={28} className="text-[#ff7a1a] cursor-pointer" /> : <ToggleLeft size={28} className="text-neutral-600 cursor-pointer" />}
+                  </button>
+                </div>
+
+                {/* Chronology Log */}
+                <div className="flex items-center justify-between p-3 bg-neutral-950/40 border border-neutral-800/40 rounded-xl">
+                  <div className="space-y-0.5">
+                    <p className="font-bold text-white text-[11px]">Milestones Audit Trail</p>
+                    <p className="text-[9px] text-[#aaa]">Show list of transit scan checkpoints</p>
+                  </div>
+                  <button type="button" onClick={() => setTrackerShowChronologyLog(!trackerShowChronologyLog)} className="focus:outline-none">
+                    {trackerShowChronologyLog ? <ToggleRight size={28} className="text-[#ff7a1a] cursor-pointer" /> : <ToggleLeft size={28} className="text-neutral-600 cursor-pointer" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Custom Theme Color Preset & Custom Notes block */}
+              <div className="border-t border-neutral-800/60 pt-4 space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[9px] text-[#aaa] font-bold uppercase font-mono tracking-wider">
+                    Tracking Page Aesthetics & Theme Accent
+                  </label>
+                  <select
+                    value={trackerCustomBackgroundPreset}
+                    onChange={(e: any) => setTrackerCustomBackgroundPreset(e.target.value)}
+                    className="w-full bg-neutral-950 border border-neutral-800 focus:border-[#ff7a1a] rounded-xl p-3 outline-none text-white text-xs"
+                  >
+                    <option value="red-yellow">Logify Premium Signature (DHL Crimson & Gold)</option>
+                    <option value="slate">Carbon Slate (Minimalist Technical Dark)</option>
+                    <option value="emerald">EcoCarrier Direct (Deep Forest & Mint Green)</option>
+                    <option value="cosmic">Cosmic Nebula (Interstellar Purple & Indigo)</option>
+                    <option value="cyber">Cyberpunk Grid (Radical Neon & Cyan)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[9px] text-[#aaa] font-bold uppercase font-mono tracking-wider">
+                    Custom Tracker Announcement notes / Safety Banner Content
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={trackerCustomNotes}
+                    onChange={(e) => setTrackerCustomNotes(e.target.value)}
+                    placeholder="e.g. Please note: Severe weather patterns near central terminal may result in transient 12-hour cargo holds. Safety is guaranteed."
+                    className="w-full bg-neutral-950 border border-neutral-800 hover:border-neutral-700 focus:border-[#ff7a1a] rounded-xl p-3 outline-none text-white font-sans text-xs"
+                  />
+                  <p className="text-[9px] text-neutral-500">
+                    Entering content here automatically renders a high-priority, administrative security broadcast card right at the top of the customer's tracking page. Leave empty to disable.
+                  </p>
                 </div>
               </div>
             </div>

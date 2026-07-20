@@ -443,6 +443,8 @@ export default function AdminPanel({
                 <AdminTrackingView
                   shipments={shipments}
                   drivers={drivers}
+                  token={token}
+                  onRefresh={fetchAdminData}
                   initialTrackId={trackingIdTarget}
                 />
               )}

@@ -3,10 +3,66 @@ import {
   Search, Loader2, ArrowRight, ShieldCheck, MapPin, Truck, Calendar, 
   DollarSign, Package, Clock, Activity, Map, Compass, Scale, Share2, 
   Copy, Check, Play, Pause, RotateCcw, Terminal, Wifi, AlertTriangle, CheckCircle2,
-  FileText, Bell
+  FileText, Bell, QrCode, Camera, Mail, Gauge, Zap, Wind, Thermometer, Satellite, Database, Cpu, Shield, Globe, RefreshCw, AlertCircle
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Shipment, Coordinates, Settings } from '../types.js';
 import LeafletMap from './LeafletMap.tsx';
+import QrScannerModal from './QrScannerModal.tsx';
+
+const detectLogisticsPartner = (id: string) => {
+  const trimmed = id.trim().toUpperCase();
+  if (!trimmed) return null;
+
+  if (/^LOG-/i.test(trimmed)) {
+    return {
+      name: "Logify Express",
+      icon: <Zap size={14} className="text-amber-500 animate-pulse" />,
+      badgeClass: "bg-amber-500/10 text-amber-600 border border-amber-500/20 dark:bg-amber-500/5 dark:text-amber-400 dark:border-amber-500/10",
+      description: "Logify automated multi-modal smart logistics grid",
+    };
+  }
+  if (/^DHL-/i.test(trimmed) || /^\d{10}$/.test(trimmed)) {
+    return {
+      name: "DHL Express",
+      icon: <Globe size={14} className="text-yellow-600 dark:text-yellow-400" />,
+      badgeClass: "bg-yellow-500/10 text-yellow-700 border border-yellow-500/20 dark:bg-yellow-500/5 dark:text-yellow-400 dark:border-yellow-500/10",
+      description: "DHL Global Air Freight & Express carrier",
+    };
+  }
+  if (/^FDX-/i.test(trimmed) || /^FX-/i.test(trimmed) || /^\d{12}$/.test(trimmed)) {
+    return {
+      name: "FedEx Express",
+      icon: <Compass size={14} className="text-purple-600 dark:text-purple-400" />,
+      badgeClass: "bg-purple-500/10 text-purple-700 border border-purple-500/20 dark:bg-purple-500/5 dark:text-purple-400 dark:border-purple-500/10",
+      description: "FedEx high-priority overland & aero network",
+    };
+  }
+  if (/^UPS-/i.test(trimmed) || /^1Z/i.test(trimmed)) {
+    return {
+      name: "UPS Logistics",
+      icon: <ShieldCheck size={14} className="text-yellow-800 dark:text-yellow-500" />,
+      badgeClass: "bg-amber-950/10 text-yellow-800 border border-yellow-800/20 dark:bg-amber-950/5 dark:text-yellow-500 dark:border-yellow-800/10",
+      description: "UPS Shield-Guaranteed supply chain",
+    };
+  }
+  if (/^USPS-/i.test(trimmed) || /^(9[0-9]{20,22})$/.test(trimmed)) {
+    return {
+      name: "USPS Postal",
+      icon: <MapPin size={14} className="text-blue-600 dark:text-blue-400" />,
+      badgeClass: "bg-blue-500/10 text-blue-700 border border-blue-500/20 dark:bg-blue-500/5 dark:text-blue-400 dark:border-blue-500/10",
+      description: "United States Postal Service ground advantage",
+    };
+  }
+
+  // Fallback / default
+  return {
+    name: "Standard Logistics Partner",
+    icon: <Truck size={14} className="text-slate-500 dark:text-slate-400" />,
+    badgeClass: "bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800/40 dark:text-slate-300 dark:border-slate-700",
+    description: "Multi-carrier routing auto-assigned",
+  };
+};
 
 interface PublicTrackerProps {
   initialTrackId?: string;
@@ -17,6 +73,7 @@ interface PublicTrackerProps {
 
 export default function PublicTracker({ initialTrackId, onClearTrackId, theme, settings }: PublicTrackerProps) {
   const [trackId, setTrackId] = useState(initialTrackId || '');
+  const partner = detectLogisticsPartner(trackId);
   const [shipment, setShipment] = useState<Shipment | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,12 +82,21 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
   const [showShareModal, setShowShareModal] = useState(false);
   const [copied, setCopied] = useState(false);
   const [shareNotification, setShareNotification] = useState<string | null>(null);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
   
   // Custom tracking dashboard states
   const [activeTab, setActiveTab] = useState<'history' | 'facts'>('history');
   const [smsNumber, setSmsNumber] = useState('');
   const [smsSubscribed, setSmsSubscribed] = useState(false);
   const [smsLoading, setSmsLoading] = useState(false);
+
+  // Email Subscription States
+  const [emailValue, setEmailValue] = useState('');
+  const [isEmailSubscribed, setIsEmailSubscribed] = useState(false);
+  const [isEmailToggled, setIsEmailToggled] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailMessage, setEmailMessage] = useState<string | null>(null);
+  const [emailStatusType, setEmailStatusType] = useState<'success' | 'info' | 'error' | null>(null);
 
   // Real-time tracking simulation and polling states
   const [isSimulating, setIsSimulating] = useState(false);
@@ -41,6 +107,54 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
   const [simLogs, setSimLogs] = useState<string[]>([]);
   const [isAutoPolling, setIsAutoPolling] = useState(false);
   const [simulatedCoords, setSimulatedCoords] = useState<Coordinates | null>(null);
+
+  // Pro features for realistic interactive telemetry
+  const [terminalMode, setTerminalMode] = useState<'human' | 'nmea'>('human');
+  const [telemetryTab, setTelemetryTab] = useState<'hardware' | 'sensors' | 'weather'>('hardware');
+  const [networkPing, setNetworkPing] = useState(28);
+  const [starlinkStatus, setStarlinkStatus] = useState('LOCKED');
+  const [cargoTemp, setCargoTemp] = useState(4.2);
+  const [gForceX, setGForceX] = useState(0.02);
+  const [gForceY, setGForceY] = useState(0.04);
+  const [altitude, setAltitude] = useState(142);
+  const [nmeaLogs, setNmeaLogs] = useState<string[]>([]);
+
+  // Generator for highly realistic raw NMEA lines from dynamic coordinates
+  const generateNmeaSentences = (coords: Coordinates, speed: number) => {
+    const latDeg = Math.floor(Math.abs(coords.lat));
+    const latMin = ((Math.abs(coords.lat) - latDeg) * 60).toFixed(4);
+    const latHem = coords.lat >= 0 ? 'N' : 'S';
+    const latStr = `${latDeg.toString().padStart(2, '0')}${latMin}`;
+
+    const lngDeg = Math.floor(Math.abs(coords.lng));
+    const lngMin = ((Math.abs(coords.lng) - lngDeg) * 60).toFixed(4);
+    const lngHem = coords.lng >= 0 ? 'E' : 'W';
+    const lngStr = `${lngDeg.toString().padStart(3, '0')}${lngMin}`;
+
+    const dateObj = new Date();
+    const timeStr = dateObj.toISOString().slice(11, 19).replace(/:/g, '');
+    const dateStr = dateObj.toISOString().slice(8, 10) + dateObj.toISOString().slice(5, 7) + dateObj.toISOString().slice(2, 4);
+
+    const speedKnots = (speed * 0.868976).toFixed(1);
+    
+    // GPRMC sentence
+    const gprmcRaw = `GPRMC,${timeStr}.00,A,${latStr},${latHem},${lngStr},${lngHem},${speedKnots},0.0,${dateStr},,`;
+    let checksumRmc = 0;
+    for (let i = 0; i < gprmcRaw.length; i++) {
+      checksumRmc ^= gprmcRaw.charCodeAt(i);
+    }
+    const gprmc = `$${gprmcRaw}*${checksumRmc.toString(16).toUpperCase().padStart(2, '0')}`;
+
+    // GPGGA sentence
+    const gpggaRaw = `GPGGA,${timeStr}.00,${latStr},${latHem},${lngStr},${lngHem},1,08,0.9,45.2,M,-22.1,M,,`;
+    let checksumGga = 0;
+    for (let i = 0; i < gpggaRaw.length; i++) {
+      checksumGga ^= gpggaRaw.charCodeAt(i);
+    }
+    const gpgga = `$${gpggaRaw}*${checksumGga.toString(16).toUpperCase().padStart(2, '0')}`;
+
+    return [gprmc, gpgga];
+  };
 
   // Helper to calculate distance on Earth using Haversine
   const getDistanceKm = (from: Coordinates, to: Coordinates) => {
@@ -109,7 +223,21 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
         `[${new Date().toLocaleTimeString()}] 📍 Status: ${shipment.status}. Position: Lat ${current.lat.toFixed(4)}, Lng ${current.lng.toFixed(4)}.`
       ]);
 
+      const initialNmea = generateNmeaSentences(current, 0);
+      setNmeaLogs([
+        `$GPGSA,A,3,01,02,03,04,05,06,07,08,,,1.8,0.9,1.5*3F`,
+        `$GPGSV,3,1,11,01,40,090,40,02,19,045,35,03,27,225,41,04,12,315,38*72`,
+        ...initialNmea
+      ]);
+
       setIsSimulating(false);
+
+      // Reset email states for new tracked shipment
+      setIsEmailSubscribed(false);
+      setIsEmailToggled(false);
+      setEmailValue('');
+      setEmailMessage(null);
+      setEmailStatusType(null);
     } else {
       setSimulatedCoords(null);
       setIsSimulating(false);
@@ -165,12 +293,52 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
           setSimLogs((prevLogs) => [...prevLogs, ...logs]);
         }
 
+        const newNmea = generateNmeaSentences(newCoords, currentSpeed);
+        setNmeaLogs((prev) => [...prev, ...newNmea].slice(-50));
+
         return next;
       });
     }, 1500);
 
     return () => clearInterval(interval);
   }, [isSimulating, shipment]);
+
+  // Real-time fluctuation for telemetry instruments to simulate active live sensors
+  useEffect(() => {
+    if (!shipment) return;
+    const interval = setInterval(() => {
+      setNetworkPing((prev) => {
+        const delta = Math.floor(Math.random() * 5) - 2; // -2 to +2
+        return Math.max(15, Math.min(65, prev + delta));
+      });
+      setCargoTemp((prev) => {
+        const delta = (Math.random() * 0.1) - 0.05; // -0.05 to +0.05
+        return parseFloat(Math.max(2.8, Math.min(5.5, prev + delta)).toFixed(2));
+      });
+      setGForceX((prev) => {
+        const isMoving = isSimulating || shipment.status === 'In Transit' || shipment.status === 'Out for Delivery';
+        const range = isMoving ? 0.15 : 0.01;
+        return parseFloat(((Math.random() * range * 2) - range).toFixed(3));
+      });
+      setGForceY((prev) => {
+        const isMoving = isSimulating || shipment.status === 'In Transit' || shipment.status === 'Out for Delivery';
+        const range = isMoving ? 0.15 : 0.01;
+        return parseFloat(((Math.random() * range * 2) - range).toFixed(3));
+      });
+      setAltitude((prev) => {
+        const delta = Math.floor(Math.random() * 3) - 1; // -1 to +1
+        return Math.max(80, Math.min(480, prev + delta));
+      });
+
+      // Stream continuous NMEA GPS lines when in raw terminal mode
+      const activeCoords = simulatedCoords || shipment.currentCoords || shipment.pickupCoords;
+      const speed = isSimulating ? simSpeed : shipment.status === 'In Transit' ? 64 : shipment.status === 'Out for Delivery' ? 32 : 0;
+      const newNmea = generateNmeaSentences(activeCoords, speed);
+      setNmeaLogs((prev) => [...prev, ...newNmea].slice(-50));
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [shipment, isSimulating, simulatedCoords, simSpeed]);
 
   // Auto-polling database sync effect
   useEffect(() => {
@@ -259,6 +427,12 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
   }, [initialTrackId]);
 
   useEffect(() => {
+    if (settings?.trackerShowChronologyLog === false && activeTab === 'history') {
+      setActiveTab('facts');
+    }
+  }, [settings?.trackerShowChronologyLog, activeTab]);
+
+  useEffect(() => {
     if (shipment && !loading) {
       setProgressWidth('0%');
       const targetWidth = 
@@ -296,54 +470,176 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
     }, 1000);
   };
 
-  const formatDate = (isoStr: string) => {
-    return new Date(isoStr).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const handleEmailSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailValue.trim() || !emailValue.includes('@')) {
+      setEmailMessage('Please enter a valid email address.');
+      setEmailStatusType('error');
+      return;
+    }
+    setEmailLoading(true);
+    setEmailMessage(null);
+    try {
+      const response = await fetch(`/api/track/${shipment?.id}/subscribe`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: emailValue.trim() }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setIsEmailSubscribed(true);
+        setEmailMessage(data.message);
+        setEmailStatusType(data.status === 'existing' ? 'info' : 'success');
+        setSimLogs((prev) => [
+          ...prev,
+          `[${new Date().toLocaleTimeString()}] 📬 Email updates registered for ${emailValue.trim().toLowerCase()}.`
+        ]);
+      } else {
+        setEmailMessage(data.error || 'Failed to subscribe to email updates.');
+        setEmailStatusType('error');
+      }
+    } catch (err) {
+      console.error('Error subscribing to updates:', err);
+      setEmailMessage('An error occurred. Please try again.');
+      setEmailStatusType('error');
+    } finally {
+      setEmailLoading(false);
+    }
   };
+
+  const formatDate = (isoStr: string) => {
+    try {
+      return new Date(isoStr).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return isoStr;
+    }
+  };
+
+  const getBackgroundPresetStyles = () => {
+    const preset = settings?.trackerCustomBackgroundPreset || 'red-yellow';
+    switch (preset) {
+      case 'slate':
+        return {
+          wrapper: 'bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-6 md:p-10 rounded-3xl shadow-sm transition-all duration-300',
+          cardBorder: 'border-slate-500 dark:border-slate-400',
+          accentText: 'text-slate-600 dark:text-slate-300',
+          accentBg: 'bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-500/20',
+          btn: 'bg-slate-700 hover:bg-slate-800 text-white shadow-slate-600/10 focus:border-slate-500 dark:focus:border-slate-400',
+          logoColor: 'text-slate-700 dark:text-slate-200',
+          logoTag: 'bg-slate-700 text-white',
+        };
+      case 'emerald':
+        return {
+          wrapper: 'bg-emerald-50/10 dark:bg-emerald-950/10 border border-emerald-100 dark:border-emerald-900/40 p-6 md:p-10 rounded-3xl shadow-sm transition-all duration-300',
+          cardBorder: 'border-emerald-600 dark:border-emerald-500',
+          accentText: 'text-emerald-600 dark:text-emerald-400',
+          accentBg: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
+          btn: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/10 focus:border-emerald-500 dark:focus:border-emerald-400',
+          logoColor: 'text-emerald-600 dark:text-emerald-400',
+          logoTag: 'bg-emerald-600 text-white',
+        };
+      case 'cosmic':
+        return {
+          wrapper: 'bg-[#121324]/10 dark:bg-[#0c0d19]/60 border border-indigo-950/40 dark:border-indigo-900/40 p-6 md:p-10 rounded-3xl shadow-sm transition-all duration-300',
+          cardBorder: 'border-indigo-600 dark:border-indigo-500',
+          accentText: 'text-indigo-600 dark:text-indigo-400',
+          accentBg: 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/20',
+          btn: 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/10 focus:border-indigo-500 dark:focus:border-indigo-400',
+          logoColor: 'text-indigo-500 dark:text-indigo-300',
+          logoTag: 'bg-indigo-600 text-white',
+        };
+      case 'cyber':
+        return {
+          wrapper: 'bg-yellow-500/5 dark:bg-zinc-950/80 border border-yellow-500/20 dark:border-yellow-500/10 p-6 md:p-10 rounded-3xl shadow-sm transition-all duration-300',
+          cardBorder: 'border-yellow-400 dark:border-yellow-300',
+          accentText: 'text-yellow-600 dark:text-yellow-400',
+          accentBg: 'bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/30',
+          btn: 'bg-zinc-900 hover:bg-black text-yellow-400 font-mono border border-yellow-400/50 shadow-yellow-500/5 focus:border-yellow-400 dark:focus:border-yellow-300',
+          logoColor: 'text-zinc-900 dark:text-yellow-400 font-mono',
+          logoTag: 'bg-yellow-400 text-zinc-950 font-black',
+        };
+      case 'red-yellow':
+      default:
+        return {
+          wrapper: '',
+          cardBorder: 'border-dhl-red dark:border-red-600',
+          accentText: 'text-dhl-red dark:text-red-400',
+          accentBg: 'bg-dhl-yellow/15 text-dhl-red border-dhl-yellow/30',
+          btn: 'bg-dhl-red hover:bg-dhl-red-hover text-white shadow-red-500/10 focus:border-dhl-red dark:focus:border-red-500',
+          logoColor: 'text-dhl-red',
+          logoTag: 'bg-dhl-red text-white',
+        };
+    }
+  };
+
+  const presetStyle = getBackgroundPresetStyles();
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 md:py-12 space-y-8 min-h-[70vh]">
-      {/* FedEx Style Corporate Header Branding */}
-      <div className="text-center space-y-4 max-w-2xl mx-auto">
-        <div className="flex items-center justify-center gap-1 font-sans">
-          <span className="text-4xl font-black tracking-tighter text-dhl-red">Logify</span>
-          <span className="bg-dhl-red text-white text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Express®</span>
-        </div>
-        <h1 className="text-xl md:text-2xl font-sans font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight">
-          Global Logistics Waybill Tracking
-        </h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-          Input your 12-digit tracking reference code below to view active status, scheduled milestones, and live driver telemetry feeds.
-        </p>
-      </div>
-
-      {/* Track Search Form with DHL Red Focus & Yellow/Red Button */}
-      <div className="max-w-xl mx-auto space-y-3">
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <div className="flex-1 relative">
-            <input
-              type="text"
-              required
-              placeholder="Enter Tracking Number (e.g. LOG-583019-US)"
-              value={trackId}
-              onChange={(e) => setTrackId(e.target.value)}
-              className="w-full bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 text-sm font-mono text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-dhl-red dark:focus:border-red-500 transition-colors shadow-sm"
-            />
+      <div className={presetStyle.wrapper}>
+        {/* FedEx Style Corporate Header Branding */}
+        <div className="text-center space-y-4 max-w-2xl mx-auto">
+          <div className="flex items-center justify-center gap-1 font-sans">
+            <span className={`text-4xl font-black tracking-tighter ${presetStyle.logoColor}`}>Logify</span>
+            <span className={`${presetStyle.logoTag} text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider`}>Express®</span>
           </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-6 py-3.5 bg-dhl-red hover:bg-dhl-red-hover disabled:bg-dhl-red/50 text-white text-xs font-black uppercase tracking-wider rounded-xl flex items-center gap-2 transition-all shadow-md shadow-red-500/10"
-          >
-            {loading ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
-            Track Status
-          </button>
-        </form>
+          <h1 className="text-xl md:text-2xl font-sans font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight">
+            Global Logistics Waybill Tracking
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+            Input your 12-digit tracking reference code below to view active status, scheduled milestones, and live driver telemetry feeds.
+          </p>
+        </div>
+
+        {/* Track Search Form with Custom Focus & Style Button */}
+        <div className="max-w-xl mx-auto space-y-3 mt-8">
+          <form onSubmit={handleSubmit} className="flex gap-2">
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                required
+                placeholder="Enter Tracking Number (e.g. LOG-583019-US)"
+                value={trackId}
+                onChange={(e) => setTrackId(e.target.value)}
+                className="w-full bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl pl-4 pr-12 py-3.5 text-sm font-mono text-slate-900 dark:text-white placeholder-slate-400 outline-none transition-colors shadow-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <button
+                type="button"
+                onClick={() => setIsScannerOpen(true)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer flex items-center justify-center border border-slate-200/40 dark:border-slate-700/40"
+                title="Scan QR Code / Barcode with Camera"
+              >
+                <QrCode size={18} className="text-dhl-red dark:text-red-500" />
+              </button>
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className={`px-6 py-3.5 disabled:opacity-50 text-white text-xs font-black uppercase tracking-wider rounded-xl flex items-center gap-2 transition-all cursor-pointer ${presetStyle.btn}`}
+            >
+              {loading ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
+              Track Status
+            </button>
+          </form>
+
+        {trackId.trim() && partner && (
+          <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/80 px-4 py-2.5 rounded-xl text-left animate-in fade-in slide-in-from-top-1 duration-200 shadow-sm">
+            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono shrink-0">Auto-Detected Carrier:</span>
+            <span className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider font-mono shrink-0 ${partner.badgeClass}`}>
+              {partner.icon}
+              {partner.name}
+            </span>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono hidden sm:inline truncate">— {partner.description}</span>
+          </div>
+        )}
         
         {/* Clickable Quick Sample Reference Tags for Premium Usability */}
         <div className="flex items-center justify-center gap-2 text-[10px] font-mono text-slate-400">
@@ -383,6 +679,17 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
         </div>
       )}
 
+      {/* Custom Broadcast Notes */}
+      {shipment && !loading && settings?.trackerCustomNotes && (
+        <div className="max-w-7xl mx-auto bg-amber-500/10 border-l-4 border-amber-500 text-amber-800 dark:text-amber-400 p-4 rounded-xl flex items-start gap-3 shadow-sm font-sans my-4">
+          <Shield size={18} className="text-amber-500 shrink-0 mt-0.5" />
+          <div className="space-y-1 text-left text-xs">
+            <span className="font-bold uppercase tracking-wider text-[10px] block">Global Logistics Broadcast Advisory</span>
+            <p className="leading-relaxed font-medium">{settings.trackerCustomNotes}</p>
+          </div>
+        </div>
+      )}
+
       {/* Success Result Panel */}
       {shipment && !loading && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -403,50 +710,63 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                 <button
                   onClick={handleRefresh}
                   disabled={refreshing}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-150/80 dark:bg-slate-800/50 dark:hover:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 transition-all disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-150/80 dark:bg-slate-800/50 dark:hover:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 transition-all disabled:opacity-50 cursor-pointer"
                   title="Simulate fetching the latest tracking data from the server"
                 >
                   <Activity size={13} className={`text-blue-500 ${refreshing ? 'animate-spin' : ''}`} />
                   {refreshing ? 'Refreshing...' : 'Refresh'}
                 </button>
-
+                
                 {/* Share Shipment Button */}
-                <button
-                  onClick={() => setShowShareModal(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-blue-500/15"
-                >
-                  <Share2 size={13} />
-                  Share Shipment
-                </button>
+                {settings?.trackerShowShareButton !== false && (
+                  <button
+                    onClick={() => setShowShareModal(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-blue-500/15 cursor-pointer"
+                  >
+                    <Share2 size={13} />
+                    Share Shipment
+                  </button>
+                )}
               </div>
             </div>
 
             {/* PROMINENT SHIPMENT OVERVIEW CARD - FEDEX HIGH DENSITY CORP LAYOUT */}
-            <div className="bg-white dark:bg-slate-900 border-t-8 border-dhl-red dark:border-red-600 rounded-2xl p-6 sm:p-8 shadow-md space-y-6">
+            <div className={`bg-white dark:bg-slate-900 border-t-8 ${presetStyle.cardBorder} rounded-2xl p-6 sm:p-8 shadow-md space-y-6`}>
               
               {/* Main tracking banner */}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-800">
                 <div className="space-y-1.5">
-                  <span className="text-[10px] text-dhl-red uppercase font-black tracking-widest font-mono block">Logify Express Waybill ID</span>
-                  <div className="flex items-center gap-3">
+                  <span className={`text-[10px] ${presetStyle.accentText} uppercase font-black tracking-widest font-mono block`}>Logify Express Waybill ID</span>
+                  <div className="flex items-center gap-3 flex-wrap">
                     <h3 className="text-3xl font-sans font-black text-slate-900 dark:text-white tracking-tight">
                       {shipment.id}
                     </h3>
-                    <span className="text-[10px] font-bold font-mono uppercase bg-dhl-yellow/15 text-dhl-red px-2 py-0.5 rounded border border-dhl-yellow/30">
+                    <span className={`text-[10px] font-bold font-mono uppercase px-2 py-0.5 rounded border ${presetStyle.accentBg}`}>
                       {shipment.type}
                     </span>
+                    {(() => {
+                      const activePartner = detectLogisticsPartner(shipment.id);
+                      return activePartner && (
+                        <span className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider font-mono ${activePartner.badgeClass}`}>
+                          {activePartner.icon}
+                          {activePartner.name}
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
 
-                <div className="space-y-1 md:text-right">
-                  <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest font-mono block">Estimated Delivery Date</span>
-                  <div className="text-xl sm:text-2xl font-sans font-black text-dhl-red dark:text-red-400 tracking-tight">
-                    {formatDate(shipment.estimatedDelivery)}
+                {settings?.trackerShowEstimatedDelivery !== false && (
+                  <div className="space-y-1 md:text-right">
+                    <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest font-mono block">Estimated Delivery Date</span>
+                    <div className={`text-xl sm:text-2xl font-sans font-black ${presetStyle.accentText} tracking-tight`}>
+                      {formatDate(shipment.estimatedDelivery)}
+                    </div>
+                    <span className={`text-[9px] font-black uppercase tracking-wider font-mono px-2 py-0.5 rounded border ${presetStyle.accentBg}`}>
+                      On-Time Transit SLA Guarantee
+                    </span>
                   </div>
-                  <span className="text-[9px] text-dhl-red font-black uppercase tracking-wider font-mono bg-dhl-yellow/15 dark:bg-yellow-950/20 px-2 py-0.5 rounded border border-dhl-yellow/30">
-                    On-Time Transit SLA Guarantee
-                  </span>
-                </div>
+                )}
               </div>
 
               {/* ACTION-ORIENTED STATUS WITH HIGH DENSITY INFO */}
@@ -581,10 +901,10 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
             {/* Delivery Estimation Progress Bar & Route Vector Panel */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Delivery Estimation Progress Bar */}
-              <div className="md:col-span-2 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-3 flex flex-col justify-between">
+              <div className={`${settings?.trackerShowRouteVector !== false ? 'md:col-span-2' : 'md:col-span-3'} bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-3 flex flex-col justify-between`}>
                 <div className="flex justify-between items-center text-xs">
                   <span className="font-mono text-slate-400 uppercase font-bold tracking-wider">Delivery Transit Progress</span>
-                  <span className="font-mono font-bold text-dhl-red dark:text-red-400">
+                  <span className={`font-mono font-bold ${presetStyle.accentText}`}>
                     {shipment.status === 'Delivered' ? '100% (Delivered)' :
                      shipment.status === 'Out for Delivery' ? '85% (Out for Delivery)' :
                      shipment.status === 'In Transit' ? '60% (In Transit)' :
@@ -594,7 +914,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                 </div>
                 <div className="relative h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden my-1">
                   <div 
-                    className={`h-full bg-gradient-to-r from-dhl-red to-dhl-yellow rounded-full transition-all duration-[1500ms] ease-out ${
+                    className={`h-full bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full transition-all duration-[1500ms] ease-out ${
                       shipment.status === 'In Transit' ? 'animate-pulse' : ''
                     }`}
                     style={{
@@ -603,119 +923,123 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                   />
                 </div>
                 <div className="flex justify-between text-[9px] font-mono text-slate-400 pt-1">
-                  <span className={shipment.status === 'Pending' ? 'text-dhl-red font-bold' : ''}>Ordered</span>
-                  <span className={shipment.status === 'Picked Up' ? 'text-dhl-red font-bold' : ''}>Picked Up</span>
-                  <span className={shipment.status === 'In Transit' ? 'text-dhl-red font-bold animate-pulse' : ''}>In Transit</span>
-                  <span className={shipment.status === 'Out for Delivery' ? 'text-dhl-red font-bold' : ''}>Out for Delivery</span>
+                  <span className={shipment.status === 'Pending' ? `${presetStyle.accentText} font-bold` : ''}>Ordered</span>
+                  <span className={shipment.status === 'Picked Up' ? `${presetStyle.accentText} font-bold` : ''}>Picked Up</span>
+                  <span className={shipment.status === 'In Transit' ? `${presetStyle.accentText} font-bold animate-pulse` : ''}>In Transit</span>
+                  <span className={shipment.status === 'Out for Delivery' ? `${presetStyle.accentText} font-bold` : ''}>Out for Delivery</span>
                   <span className={shipment.status === 'Delivered' ? 'text-emerald-500 dark:text-emerald-400 font-bold' : ''}>Delivered</span>
                 </div>
               </div>
 
               {/* Route Vector Panel */}
-              <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-slate-400 uppercase font-bold tracking-wider text-[10px] flex items-center gap-1">
-                    <Map size={12} className="text-dhl-red" />
-                    Transit Route Vector
-                  </span>
-                  <span className="font-mono text-[8px] bg-dhl-yellow/15 text-dhl-red font-extrabold px-1.5 py-0.5 rounded uppercase border border-dhl-yellow/25">
-                    A ➔ B
-                  </span>
-                </div>
-
-                {/* Styled route vector diagram with map overlay styling */}
-                <div className="relative bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800 rounded-xl p-3 h-24 overflow-hidden flex flex-col justify-between">
-                  {/* Subtle map pattern lines background */}
-                  <div className="absolute inset-0 opacity-15 pointer-events-none">
-                    <svg width="100%" height="100%">
-                      <defs>
-                        <pattern id="grid" width="12" height="12" patternUnits="userSpaceOnUse">
-                          <path d="M 12 0 L 0 0 0 12" fill="none" stroke="currentColor" strokeWidth="0.5" />
-                        </pattern>
-                      </defs>
-                      <rect width="100%" height="100%" fill="url(#grid)" />
-                    </svg>
-                  </div>
-
-                  {/* Route connecting line */}
-                  <div className="absolute inset-x-8 top-1/2 -translate-y-1/2 h-[1.5px] border-t border-dashed border-slate-300 dark:border-slate-700 pointer-events-none flex justify-between items-center" />
-                  
-                  {/* Progress indicator along path */}
-                  <div 
-                    className="absolute top-1/2 -translate-y-1/2 transition-all duration-[1500ms] ease-out flex flex-col items-center pointer-events-none"
-                    style={{ 
-                      left: `calc(12% + (${progressWidth === '0%' ? '0px' : progressWidth}) * 0.72)` 
-                    }}
-                  >
-                    <div className="bg-dhl-red text-white rounded-full p-1 shadow-lg shadow-red-500/35 relative z-10 animate-bounce">
-                      <Truck size={10} />
-                    </div>
-                  </div>
-
-                  {/* Start Point (Pickup) */}
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col items-center">
-                    <div className="w-5 h-5 rounded-full bg-emerald-500 text-white font-extrabold text-[9px] flex items-center justify-center shadow-md">
-                      A
-                    </div>
-                  </div>
-
-                  {/* End Point (Delivery) */}
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col items-center">
-                    <div className="w-5 h-5 rounded-full bg-rose-500 text-white font-extrabold text-[9px] flex items-center justify-center shadow-md">
-                      B
-                    </div>
-                  </div>
-
-                  {/* Text Details inside visual box */}
-                  <div className="mt-auto w-full flex justify-between items-center text-[8px] font-mono text-slate-400 relative z-20">
-                    <span className="truncate max-w-[80px] bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded" title={shipment.pickupAddress}>
-                      {shipment.pickupAddress.split(',')[0]}
+              {settings?.trackerShowRouteVector !== false && (
+                <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-slate-400 uppercase font-bold tracking-wider text-[10px] flex items-center gap-1">
+                      <Map size={12} className={presetStyle.accentText} />
+                      Transit Route Vector
                     </span>
-                    <span className="truncate max-w-[80px] bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-right" title={shipment.deliveryAddress}>
-                      {shipment.deliveryAddress.split(',')[0]}
+                    <span className={`font-mono text-[8px] font-extrabold px-1.5 py-0.5 rounded uppercase border ${presetStyle.accentBg}`}>
+                      A ➔ B
                     </span>
                   </div>
-                </div>
 
-                <div className="flex items-center justify-between text-[9px] font-mono text-slate-500">
-                  <span className="flex items-center gap-0.5">
-                    <Compass size={10} className="text-slate-400 animate-spin" style={{ animationDuration: '6s' }} />
-                    GPS Connection
-                  </span>
-                  <span className="text-slate-400 font-bold uppercase tracking-wider">Active Stream</span>
+                  {/* Styled route vector diagram with map overlay styling */}
+                  <div className="relative bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800 rounded-xl p-3 h-24 overflow-hidden flex flex-col justify-between">
+                    {/* Subtle map pattern lines background */}
+                    <div className="absolute inset-0 opacity-15 pointer-events-none">
+                      <svg width="100%" height="100%">
+                        <defs>
+                          <pattern id="grid" width="12" height="12" patternUnits="userSpaceOnUse">
+                            <path d="M 12 0 L 0 0 0 12" fill="none" stroke="currentColor" strokeWidth="0.5" />
+                          </pattern>
+                        </defs>
+                        <svg width="100%" height="100%" fill="url(#grid)" />
+                      </svg>
+                    </div>
+
+                    {/* Route connecting line */}
+                    <div className="absolute inset-x-8 top-1/2 -translate-y-1/2 h-[1.5px] border-t border-dashed border-slate-300 dark:border-slate-700 pointer-events-none flex justify-between items-center" />
+                    
+                    {/* Progress indicator along path */}
+                    <div 
+                      className="absolute top-1/2 -translate-y-1/2 transition-all duration-[1500ms] ease-out flex flex-col items-center pointer-events-none"
+                      style={{ 
+                        left: `calc(12% + (${progressWidth === '0%' ? '0px' : progressWidth}) * 0.72)` 
+                      }}
+                    >
+                      <div className="bg-blue-600 text-white rounded-full p-1 shadow-lg shadow-blue-500/35 relative z-10 animate-bounce">
+                        <Truck size={10} />
+                      </div>
+                    </div>
+
+                    {/* Start Point (Pickup) */}
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col items-center">
+                      <div className="w-5 h-5 rounded-full bg-emerald-500 text-white font-extrabold text-[9px] flex items-center justify-center shadow-md">
+                        A
+                      </div>
+                    </div>
+
+                    {/* End Point (Delivery) */}
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col items-center">
+                      <div className="w-5 h-5 rounded-full bg-rose-500 text-white font-extrabold text-[9px] flex items-center justify-center shadow-md">
+                        B
+                      </div>
+                    </div>
+
+                    {/* Text Details inside visual box */}
+                    <div className="mt-auto w-full flex justify-between items-center text-[8px] font-mono text-slate-400 relative z-20">
+                      <span className="truncate max-w-[80px] bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded" title={shipment.pickupAddress}>
+                        {shipment.pickupAddress.split(',')[0]}
+                      </span>
+                      <span className="truncate max-w-[80px] bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-right" title={shipment.deliveryAddress}>
+                        {shipment.deliveryAddress.split(',')[0]}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[9px] font-mono text-slate-500">
+                    <span className="flex items-center gap-0.5">
+                      <Compass size={10} className="text-slate-400 animate-spin" style={{ animationDuration: '6s' }} />
+                      GPS Connection
+                    </span>
+                    <span className="text-slate-400 font-bold uppercase tracking-wider">Active Stream</span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* TABBED CARGO TRAVEL HISTORY & SHIPMENT FACTS */}
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
               {/* Tab Header Selector */}
-              <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 p-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('history')}
-                  className={`flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
-                    activeTab === 'history'
-                      ? 'bg-white dark:bg-slate-800 text-dhl-red shadow-sm border border-slate-200/50 dark:border-slate-700'
-                      : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/50 dark:hover:bg-slate-800/40'
-                  }`}
-                >
-                  <Activity size={14} className={activeTab === 'history' ? 'text-dhl-red' : ''} />
-                  Travel History
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('facts')}
-                  className={`flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
-                    activeTab === 'facts'
-                      ? 'bg-white dark:bg-slate-800 text-dhl-red shadow-sm border border-slate-200/50 dark:border-slate-700'
-                      : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/50 dark:hover:bg-slate-800/40'
-                  }`}
-                >
-                  <FileText size={14} className={activeTab === 'facts' ? 'text-dhl-red' : ''} />
-                  Shipment Facts
-                </button>
-              </div>
+              {settings?.trackerShowChronologyLog !== false && (
+                <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 p-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('history')}
+                    className={`flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
+                      activeTab === 'history'
+                        ? 'bg-white dark:bg-slate-800 text-dhl-red shadow-sm border border-slate-200/50 dark:border-slate-700'
+                        : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/50 dark:hover:bg-slate-800/40'
+                    }`}
+                  >
+                    <Activity size={14} className={activeTab === 'history' ? 'text-dhl-red' : ''} />
+                    Travel History
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('facts')}
+                    className={`flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
+                      activeTab === 'facts'
+                        ? 'bg-white dark:bg-slate-800 text-dhl-red shadow-sm border border-slate-200/50 dark:border-slate-700'
+                        : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/50 dark:hover:bg-slate-800/40'
+                    }`}
+                  >
+                    <FileText size={14} className={activeTab === 'facts' ? 'text-dhl-red' : ''} />
+                    Shipment Facts
+                  </button>
+                </div>
+              )}
 
               {/* Tab Content */}
               <div className="p-6">
@@ -855,7 +1179,8 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
             </div>
 
             {/* LIVE INTERACTIVE MAP & TELEMETRY TERMINAL */}
-            <div className="space-y-4">
+            {(settings?.trackerShowMap !== false || settings?.trackerShowTelemetryDeck !== false) && (
+              <div className="space-y-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider font-mono flex items-center gap-1.5">
                   <Map size={13} className="text-dhl-red animate-pulse" />
@@ -891,64 +1216,68 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                       </>
                     )}
                   </button>
-
+ 
                   {/* Simulated Play/Pause Toggle */}
-                  {shipment.status !== 'Delivered' && shipment.status !== 'Cancelled' && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsSimulating(!isSimulating);
-                        if (!isSimulating) {
-                          setIsAutoPolling(false); // turn off live polling if we simulate
-                        }
-                      }}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-mono font-bold uppercase border transition-all cursor-pointer ${
-                        isSimulating
-                          ? 'bg-dhl-yellow border-dhl-yellow/80 text-slate-950 shadow-md shadow-dhl-yellow/15 font-black'
-                          : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
-                      }`}
-                      title="Toggle simulated driver movement transit demo along the waybill route"
-                    >
-                      {isSimulating ? (
-                        <>
-                          <Pause size={10} className="fill-current animate-pulse" />
-                          Simulating...
-                        </>
-                      ) : (
-                        <>
-                          <Play size={10} className="fill-current" />
-                          Simulate Transit
-                        </>
+                  {settings?.trackerShowSimulation !== false && (
+                    <>
+                      {shipment.status !== 'Delivered' && shipment.status !== 'Cancelled' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsSimulating(!isSimulating);
+                            if (!isSimulating) {
+                              setIsAutoPolling(false); // turn off live polling if we simulate
+                            }
+                          }}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-mono font-bold uppercase border transition-all cursor-pointer ${
+                            isSimulating
+                              ? 'bg-dhl-yellow border-dhl-yellow/80 text-slate-950 shadow-md shadow-dhl-yellow/15 font-black'
+                              : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
+                          }`}
+                          title="Toggle simulated driver movement transit demo along the waybill route"
+                        >
+                          {isSimulating ? (
+                            <>
+                              <Pause size={10} className="fill-current animate-pulse" />
+                              Simulating...
+                            </>
+                          ) : (
+                            <>
+                              <Play size={10} className="fill-current" />
+                              Simulate Transit
+                            </>
+                          )}
+                        </button>
                       )}
-                    </button>
-                  )}
 
-                  {/* Reset Simulation */}
-                  {(isSimulating || simProgress > 0.05) && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsSimulating(false);
-                        let initialProgress = 0.05;
-                        if (shipment.status === 'Delivered') initialProgress = 1.0;
-                        else if (shipment.status === 'Out for Delivery') initialProgress = 0.85;
-                        else if (shipment.status === 'In Transit') initialProgress = 0.5;
-                        else if (shipment.status === 'Picked Up') initialProgress = 0.2;
-                        
-                        setSimProgress(initialProgress);
-                        const initialCoords = interpolateCoords(shipment.pickupCoords, shipment.deliveryCoords, initialProgress);
-                        setSimulatedCoords(initialCoords);
-                        setSimDistance(getDistanceKm(initialCoords, shipment.deliveryCoords));
-                        setSimLogs((prev) => [
-                          ...prev,
-                          `[${new Date().toLocaleTimeString()}] 🔄 GPS simulation progress reset to ${Math.round(initialProgress * 100)}%.`
-                        ]);
-                      }}
-                      className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white cursor-pointer transition-all"
-                      title="Reset GPS simulation to shipment's starting progress"
-                    >
-                      <RotateCcw size={11} />
-                    </button>
+                      {/* Reset Simulation */}
+                      {(isSimulating || simProgress > 0.05) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsSimulating(false);
+                            let initialProgress = 0.05;
+                            if (shipment.status === 'Delivered') initialProgress = 1.0;
+                            else if (shipment.status === 'Out for Delivery') initialProgress = 0.85;
+                            else if (shipment.status === 'In Transit') initialProgress = 0.5;
+                            else if (shipment.status === 'Picked Up') initialProgress = 0.2;
+                            
+                            setSimProgress(initialProgress);
+                            const initialCoords = interpolateCoords(shipment.pickupCoords, shipment.deliveryCoords, initialProgress);
+                            setSimulatedCoords(initialCoords);
+                            setSimDistance(getDistanceKm(initialCoords, shipment.deliveryCoords));
+                            setSimLogs((prev) => [
+                              ...prev,
+                              `[${new Date().toLocaleTimeString()}] 🔄 GPS simulation progress reset to ${Math.round(initialProgress * 100)}%.`
+                            ]);
+                          }}
+                          className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white cursor-pointer transition-all"
+                          title="Reset GPS simulation to shipment's starting progress"
+                        >
+                          <RotateCcw size={11} />
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -956,88 +1285,353 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
               {/* Map Layout */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* 1. Leaflet Interactive Map Column */}
-                <div className="md:col-span-2">
-                  <LeafletMap
-                    pickupCoords={shipment.pickupCoords}
-                    deliveryCoords={shipment.deliveryCoords}
-                    currentCoords={simulatedCoords || shipment.currentCoords}
-                    status={isSimulating ? `In Transit (Simulating)` : shipment.status}
-                    driverName={shipment.assignedDriverId ? "Dedicated Courier" : "Logify Logistics Team"}
-                    theme={theme}
-                  />
-                </div>
+                {settings?.trackerShowMap !== false && (
+                  <div className={settings?.trackerShowTelemetryDeck !== false ? "md:col-span-2" : "md:col-span-3"}>
+                    <LeafletMap
+                      pickupCoords={shipment.pickupCoords}
+                      deliveryCoords={shipment.deliveryCoords}
+                      currentCoords={simulatedCoords || shipment.currentCoords}
+                      status={isSimulating ? `In Transit (Simulating)` : shipment.status}
+                      driverName={shipment.assignedDriverId ? "Dedicated Courier" : "Logify Logistics Team"}
+                      theme={theme}
+                    />
+                  </div>
+                )}
 
                 {/* 2. Live Telemetry metrics & Dispatch terminal */}
-                <div className="bg-slate-900 border border-slate-850 rounded-2xl p-4 flex flex-col justify-between space-y-4">
+                {settings?.trackerShowTelemetryDeck !== false && (
+                  <div className={`bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between space-y-4 shadow-xl ${settings?.trackerShowMap !== false ? 'md:col-span-1' : 'md:col-span-3'}`}>
+                  {/* Dashboard Header */}
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between border-b border-slate-850 pb-2">
-                      <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                        <Compass size={12} className="text-blue-400 animate-spin" style={{ animationDuration: '8s' }} />
-                        GPS Telemetry Status
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                      <span className="text-[10px] font-mono font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                        <Compass size={12} className="text-blue-400 animate-spin" style={{ animationDuration: '10s' }} />
+                        Fleet Telemetry Deck
                       </span>
-                      <span className="text-[9px] font-mono bg-blue-950/40 text-blue-400 border border-blue-900/40 px-1.5 py-0.5 rounded font-extrabold">
-                        {isSimulating ? "SIM FEED ACTIVE" : isAutoPolling ? "DB SYNCED" : "STATIC LINK"}
+                      <span className="text-[9px] font-mono bg-blue-950/50 text-blue-400 border border-blue-900/40 px-1.5 py-0.5 rounded font-extrabold">
+                        {isSimulating ? "SIMULATOR ONLINE" : isAutoPolling ? "DB SYNC ACTIVE" : "STABLE LINK"}
                       </span>
                     </div>
 
-                    {/* Numeric Diagnostics */}
-                    <div className="grid grid-cols-2 gap-2.5">
-                      <div className="bg-slate-950/50 border border-slate-850/50 rounded-xl p-2.5 text-center">
-                        <span className="text-[8px] font-mono uppercase text-slate-500 tracking-wider block">Speed Velocity</span>
-                        <span className="text-xs font-mono font-bold text-slate-200">
-                          {isSimulating ? `${simSpeed} mph` : shipment.status === 'In Transit' ? '64 mph' : shipment.status === 'Out for Delivery' ? '32 mph' : '0 mph'}
-                        </span>
-                      </div>
-                      <div className="bg-slate-950/50 border border-slate-850/50 rounded-xl p-2.5 text-center">
-                        <span className="text-[8px] font-mono uppercase text-slate-500 tracking-wider block">GPS Signal Fix</span>
-                        <span className="text-xs font-mono font-bold text-emerald-400">
-                          3D LOCK (4 Sats)
-                        </span>
-                      </div>
-                      <div className="bg-slate-950/50 border border-slate-850/50 rounded-xl p-2.5 text-center">
-                        <span className="text-[8px] font-mono uppercase text-slate-500 tracking-wider block">Heading vector</span>
-                        <span className="text-xs font-mono font-bold text-slate-300">
-                          {simHeading}
-                        </span>
-                      </div>
-                      <div className="bg-slate-950/50 border border-slate-850/50 rounded-xl p-2.5 text-center">
-                        <span className="text-[8px] font-mono uppercase text-slate-500 tracking-wider block">Remaining Dist</span>
-                        <span className="text-[11px] font-mono font-bold text-blue-400 truncate block">
-                          {simDistance ? `${simDistance.toFixed(1)} km` : `${getDistanceKm(shipment.currentCoords || shipment.pickupCoords, shipment.deliveryCoords).toFixed(1)} km`}
-                        </span>
-                      </div>
+                    {/* Sub-tabs for telemetry view */}
+                    <div className="grid grid-cols-3 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-850">
+                      {(['hardware', 'sensors', 'weather'] as const).map((tab) => (
+                        <button
+                          key={tab}
+                          type="button"
+                          onClick={() => setTelemetryTab(tab)}
+                          className={`text-[9px] font-mono uppercase font-bold py-1 px-1 rounded-lg transition-all cursor-pointer text-center ${
+                            telemetryTab === tab
+                              ? 'bg-slate-800 text-white shadow'
+                              : 'text-slate-500 hover:text-slate-300'
+                          }`}
+                        >
+                          {tab}
+                        </button>
+                      ))}
                     </div>
+
+                    {/* Telemetry Tab Content */}
+                    <AnimatePresence mode="wait">
+                      {telemetryTab === 'hardware' && (
+                        <motion.div
+                          key="hardware"
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -4 }}
+                          transition={{ duration: 0.15 }}
+                          className="space-y-3"
+                        >
+                          {/* Speed Gauge & Diagnostics row */}
+                          <div className="grid grid-cols-2 gap-2.5">
+                            {/* SVG Speedometer Gauge */}
+                            <div className="bg-slate-950/40 border border-slate-850/60 rounded-xl p-2.5 flex flex-col items-center justify-center relative overflow-hidden">
+                              <span className="text-[7.5px] font-mono uppercase text-slate-500 tracking-wider mb-1 block">Speed Velocity</span>
+                              <div className="relative w-16 h-16 flex items-center justify-center">
+                                <svg className="w-full h-full transform -rotate-90">
+                                  {/* Base Circle */}
+                                  <circle
+                                    cx="32"
+                                    cy="32"
+                                    r="26"
+                                    className="stroke-slate-800 fill-none"
+                                    strokeWidth="4.5"
+                                  />
+                                  {/* Active Speed Arc */}
+                                  <circle
+                                    cx="32"
+                                    cy="32"
+                                    r="26"
+                                    className="stroke-blue-500 fill-none transition-all duration-500 ease-out"
+                                    strokeWidth="4.5"
+                                    strokeDasharray="163"
+                                    strokeDashoffset={163 - (163 * Math.min(simSpeed, 120)) / 120}
+                                    strokeLinecap="round"
+                                  />
+                                </svg>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                  <span className="text-xs font-mono font-black text-slate-100">{simSpeed}</span>
+                                  <span className="text-[6.5px] font-mono uppercase text-slate-500 leading-none">mph</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Network Ping Sparks widget */}
+                            <div className="bg-slate-950/40 border border-slate-850/60 rounded-xl p-2.5 flex flex-col justify-between">
+                              <div className="flex justify-between items-start">
+                                <span className="text-[7.5px] font-mono uppercase text-slate-500 tracking-wider block">Starlink Ping</span>
+                                <span className="text-[8px] font-mono text-emerald-400 font-bold flex items-center gap-0.5">
+                                  <Wifi size={9} />
+                                  100%
+                                </span>
+                              </div>
+                              <div className="flex items-end justify-between mt-1">
+                                <span className="text-xs font-mono font-black text-slate-200">
+                                  {networkPing}ms
+                                </span>
+                                {/* Animated SVG Sparkline */}
+                                <svg className="h-5 w-12 text-blue-400/80" viewBox="0 0 50 20">
+                                  <polyline
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="1.5"
+                                    points={`0,${14 - (networkPing % 4)} 10,${12 - ((networkPing + 2) % 6)} 20,${16 - ((networkPing - 1) % 5)} 30,${9 - ((networkPing + 3) % 7)} 40,${14 - (networkPing % 4)} 50,${11 - ((networkPing + 1) % 5)}`}
+                                  />
+                                </svg>
+                              </div>
+                              <span className="text-[7px] font-mono text-slate-600 leading-none block pt-1 border-t border-slate-850">
+                                SAT ID: SL-7389-X
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Grid status details */}
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="bg-slate-950/30 border border-slate-850/40 rounded-xl p-2">
+                              <span className="text-[7.5px] font-mono uppercase text-slate-500 tracking-wider block">GPS Constellation</span>
+                              <span className="text-[10px] font-mono font-bold text-slate-300 flex items-center gap-1 pt-0.5">
+                                <Satellite size={10} className="text-emerald-400" />
+                                3D-Fix (11 Active)
+                              </span>
+                            </div>
+                            <div className="bg-slate-950/30 border border-slate-850/40 rounded-xl p-2">
+                              <span className="text-[7.5px] font-mono uppercase text-slate-500 tracking-wider block">Heading vector</span>
+                              <span className="text-[10px] font-mono font-bold text-slate-300 flex items-center gap-1 pt-0.5">
+                                <Shield size={10} className="text-blue-400" />
+                                {simHeading}
+                              </span>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {telemetryTab === 'sensors' && (
+                        <motion.div
+                          key="sensors"
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -4 }}
+                          transition={{ duration: 0.15 }}
+                          className="space-y-3"
+                        >
+                          {/* Cold Chain Monitor & Accel Grid */}
+                          <div className="grid grid-cols-2 gap-2.5">
+                            {/* Cold Chain Temp progress circle */}
+                            <div className="bg-slate-950/40 border border-slate-850/60 rounded-xl p-2.5 flex flex-col items-center justify-center">
+                              <span className="text-[7.5px] font-mono uppercase text-slate-500 tracking-wider mb-1 block">Cold Chain Temp</span>
+                              <div className="relative w-16 h-16 flex items-center justify-center">
+                                <svg className="w-full h-full transform -rotate-90">
+                                  <circle
+                                    cx="32"
+                                    cy="32"
+                                    r="26"
+                                    className="stroke-slate-800 fill-none"
+                                    strokeWidth="4.5"
+                                  />
+                                  <circle
+                                    cx="32"
+                                    cy="32"
+                                    r="26"
+                                    className="stroke-emerald-400 fill-none transition-all duration-300"
+                                    strokeWidth="4.5"
+                                    strokeDasharray="163"
+                                    strokeDashoffset={163 - (163 * Math.max(0, 10 - cargoTemp)) / 10}
+                                    strokeLinecap="round"
+                                  />
+                                </svg>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                  <span className="text-xs font-mono font-black text-slate-100">{cargoTemp}°C</span>
+                                  <span className="text-[6px] font-mono uppercase text-emerald-400 leading-none">STABLE</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* G-Force X-Y Coordinate Radar Target Grid */}
+                            <div className="bg-slate-950/40 border border-slate-850/60 rounded-xl p-2 flex flex-col items-center justify-between">
+                              <span className="text-[7.5px] font-mono uppercase text-slate-500 tracking-wider block">G-Force Vector</span>
+                              
+                              <div className="relative w-12 h-12 border border-slate-800 rounded-full flex items-center justify-center mt-1">
+                                {/* Crosshairs */}
+                                <div className="absolute inset-x-0 h-[0.5px] bg-slate-800"></div>
+                                <div className="absolute inset-y-0 w-[0.5px] bg-slate-800"></div>
+                                <div className="absolute w-6 h-6 border border-slate-800/60 rounded-full"></div>
+                                
+                                {/* Dynamic Neon Dot indicating current G-Forces */}
+                                <div 
+                                  className="absolute w-2 h-2 rounded-full bg-cyan-400 shadow-md shadow-cyan-400/50 transition-all duration-300"
+                                  style={{
+                                    left: `calc(50% - 4px + ${gForceX * 25}px)`,
+                                    top: `calc(50% - 4px - ${gForceY * 25}px)`
+                                  }}
+                                />
+                              </div>
+                              
+                              <div className="flex gap-2 text-[7px] font-mono text-slate-400 mt-1">
+                                <span>X: {gForceX >= 0 ? '+' : ''}{gForceX.toFixed(2)}G</span>
+                                <span>Y: {gForceY >= 0 ? '+' : ''}{gForceY.toFixed(2)}G</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Sensors Details summary */}
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="bg-slate-950/30 border border-slate-850/40 rounded-xl p-2">
+                              <span className="text-[7.5px] font-mono uppercase text-slate-500 tracking-wider block">Altitude SLA</span>
+                              <span className="text-[10px] font-mono font-bold text-slate-300 flex items-center gap-1 pt-0.5">
+                                <Cpu size={10} className="text-cyan-400" />
+                                {altitude} meters ASL
+                              </span>
+                            </div>
+                            <div className="bg-slate-950/30 border border-slate-850/40 rounded-xl p-2">
+                              <span className="text-[7.5px] font-mono uppercase text-slate-500 tracking-wider block">Diagnostics Link</span>
+                              <span className="text-[10px] font-mono font-bold text-emerald-400 flex items-center gap-1 pt-0.5">
+                                <ShieldCheck size={10} />
+                                OBD-II: NOMINAL
+                              </span>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {telemetryTab === 'weather' && (
+                        <motion.div
+                          key="weather"
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -4 }}
+                          transition={{ duration: 0.15 }}
+                          className="space-y-2"
+                        >
+                          <div className="bg-slate-950/50 border border-slate-850 rounded-xl p-3 space-y-2">
+                            <div className="flex items-center justify-between border-b border-slate-850 pb-1.5">
+                              <span className="text-[8px] font-mono text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                                <Wind size={10} className="text-sky-400" />
+                                Location Meteorology
+                              </span>
+                              <span className="text-[8.5px] font-mono text-slate-200">
+                                Lat: {(simulatedCoords || shipment.currentCoords || shipment.pickupCoords).lat.toFixed(3)}°
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 pt-0.5">
+                              <div className="space-y-0.5">
+                                <span className="text-[7.5px] font-mono uppercase text-slate-500 block">Ambient Air Temp</span>
+                                <span className="text-xs font-mono font-bold text-slate-200 block flex items-center gap-1">
+                                  <Thermometer size={11} className="text-rose-400" />
+                                  {(cargoTemp * 4 + 4.5).toFixed(1)}°C / 62.4°F
+                                </span>
+                              </div>
+                              <div className="space-y-0.5">
+                                <span className="text-[7.5px] font-mono uppercase text-slate-500 block">Wind Vector</span>
+                                <span className="text-xs font-mono font-bold text-slate-200 block flex items-center gap-1">
+                                  <Wind size={11} className="text-sky-400" />
+                                  NNE 14 km/h
+                                </span>
+                              </div>
+                              <div className="space-y-0.5">
+                                <span className="text-[7.5px] font-mono uppercase text-slate-500 block">Relative Humidity</span>
+                                <span className="text-xs font-mono font-bold text-slate-200 block">
+                                  58% (Relative)
+                                </span>
+                              </div>
+                              <div className="space-y-0.5">
+                                <span className="text-[7.5px] font-mono uppercase text-slate-500 block">Visibility Margin</span>
+                                <span className="text-xs font-mono font-bold text-emerald-400 block">
+                                  10.0 mi (Clear)
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
 
                     {/* Telemetry Progress Bar inside Panel */}
-                    <div className="space-y-1 pt-1">
+                    <div className="space-y-1 pt-1.5 border-t border-slate-850/60">
                       <div className="flex justify-between items-center text-[9px] font-mono text-slate-400">
-                        <span>Journey Progress</span>
-                        <span>{Math.round(simProgress * 100)}%</span>
+                        <span>Route Journey Completion</span>
+                        <span className="font-bold text-blue-400">{Math.round(simProgress * 100)}%</span>
                       </div>
                       <div className="h-1.5 w-full bg-slate-950 border border-slate-850 rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-blue-500 rounded-full transition-all duration-300 ease-out"
+                          className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all duration-300 ease-out"
                           style={{ width: `${simProgress * 100}%` }}
                         />
+                      </div>
+                      <div className="flex justify-between text-[7px] font-mono text-slate-500 pt-0.5">
+                        <span>PICKUP: {simProgress > 0.05 ? "DEPARTED" : "INIT"}</span>
+                        <span>DIST: {simDistance ? `${simDistance.toFixed(1)} km` : "N/A"} REMAINING</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Live Dispatch terminal output */}
-                  <div className="space-y-1.5 flex-1 flex flex-col min-h-[110px] justify-end">
-                    <span className="text-[8px] font-mono font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                      <Terminal size={10} />
-                      Logify telemetry stream logs
-                    </span>
-                    <div className="bg-slate-950 border border-slate-850/80 p-2.5 rounded-xl text-[9px] font-mono text-emerald-400/90 h-28 overflow-y-auto space-y-1 custom-scrollbar">
-                      {simLogs.slice(-6).map((log, index) => (
-                        <div key={index} className="leading-snug break-all">{log}</div>
-                      ))}
+                  <div className="space-y-1.5 flex-1 flex flex-col min-h-[140px] justify-end pt-2 border-t border-slate-850/50">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                        <Terminal size={10} className="text-emerald-400" />
+                        Logify receiver stream
+                      </span>
+                      {/* Terminal mode toggle switches */}
+                      <div className="flex bg-slate-950 border border-slate-800 rounded-lg p-0.5">
+                        <button
+                          type="button"
+                          onClick={() => setTerminalMode('human')}
+                          className={`text-[7.5px] font-mono uppercase px-1 py-0.5 rounded transition-all cursor-pointer ${
+                            terminalMode === 'human' ? 'bg-slate-800 text-white font-bold' : 'text-slate-500 hover:text-slate-300'
+                          }`}
+                        >
+                          Human
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setTerminalMode('nmea')}
+                          className={`text-[7.5px] font-mono uppercase px-1 py-0.5 rounded transition-all cursor-pointer ${
+                            terminalMode === 'nmea' ? 'bg-slate-800 text-white font-bold' : 'text-slate-500 hover:text-slate-300'
+                          }`}
+                        >
+                          NMEA
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-950 border border-slate-850 p-2.5 rounded-xl text-[9px] font-mono text-emerald-400/90 h-32 overflow-y-auto space-y-1 custom-scrollbar scroll-smooth">
+                      {terminalMode === 'human' ? (
+                        simLogs.slice(-7).map((log, index) => (
+                          <div key={index} className="leading-snug break-all">{log}</div>
+                        ))
+                      ) : (
+                        nmeaLogs.slice(-7).map((log, index) => (
+                          <div key={index} className="leading-snug break-all text-cyan-400/90">{log}</div>
+                        ))
+                      )}
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
+          </div>
+        )}
 
             {/* Address cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1059,132 +1653,241 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
           <div className="space-y-6">
             
             {/* 1. HIGH-FIDELITY THERMAL SHIPPING TAG MOCKUP */}
-            <div className="space-y-3">
-              <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider font-mono">Thermal Shipping Tag Mockup</h3>
-              <div className="bg-[#FAF9F6] border-2 border-dashed border-slate-300 rounded-2xl p-5 text-slate-900 shadow-sm relative overflow-hidden font-mono text-[10px]">
-                {/* Visual Label punch-hole */}
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-slate-100 dark:bg-slate-950 border border-slate-300 pointer-events-none" />
-                
-                <div className="pt-4 border-b border-slate-400 pb-2 flex justify-between items-end">
-                  <span className="font-sans font-black text-dhl-red text-sm tracking-tighter">LOGIFY EXPRESS®</span>
-                  <span className="text-[8px] text-right">PREPAID AIRBILL</span>
-                </div>
+            {settings?.trackerShowThermalTag !== false && (
+              <div className="space-y-3">
+                <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider font-mono">Thermal Shipping Tag Mockup</h3>
+                <div className="bg-[#FAF9F6] border-2 border-dashed border-slate-300 rounded-2xl p-5 text-slate-900 shadow-sm relative overflow-hidden font-mono text-[10px]">
+                  {/* Visual Label punch-hole */}
+                  <div className="absolute top-4 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-slate-100 dark:bg-slate-950 border border-slate-300 pointer-events-none" />
+                  
+                  <div className="pt-4 border-b border-slate-400 pb-2 flex justify-between items-end">
+                    <span className="font-sans font-black text-dhl-red text-sm tracking-tighter">LOGIFY EXPRESS®</span>
+                    <span className="text-[8px] text-right">PREPAID AIRBILL</span>
+                  </div>
 
-                {/* Routing Addresses */}
-                <div className="grid grid-cols-2 gap-4 py-3 border-b border-slate-400">
-                  <div className="space-y-1">
-                    <span className="text-[8px] text-slate-500 font-bold block">FROM (SENDER):</span>
-                    <p className="font-bold truncate text-slate-900">{shipment.senderName}</p>
-                    <p className="text-[8px] text-slate-500 leading-tight line-clamp-2">{shipment.pickupAddress}</p>
+                  {/* Routing Addresses */}
+                  <div className="grid grid-cols-2 gap-4 py-3 border-b border-slate-400">
+                    <div className="space-y-1">
+                      <span className="text-[8px] text-slate-500 font-bold block">FROM (SENDER):</span>
+                      <p className="font-bold truncate text-slate-900">{shipment.senderName}</p>
+                      <p className="text-[8px] text-slate-500 leading-tight line-clamp-2">{shipment.pickupAddress}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[8px] text-slate-500 font-bold block">TO (DELIVERY):</span>
+                      <p className="font-bold truncate text-slate-900">{shipment.receiverName}</p>
+                      <p className="text-[8px] text-slate-500 leading-tight line-clamp-2">{shipment.deliveryAddress}</p>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <span className="text-[8px] text-slate-500 font-bold block">TO (DELIVERY):</span>
-                    <p className="font-bold truncate text-slate-900">{shipment.receiverName}</p>
-                    <p className="text-[8px] text-slate-500 leading-tight line-clamp-2">{shipment.deliveryAddress}</p>
-                  </div>
-                </div>
 
-                {/* Package weight, level and billing terms */}
-                <div className="grid grid-cols-3 gap-2 py-3 border-b border-slate-400 text-center">
-                  <div className="border-r border-slate-300">
-                    <span className="text-[7px] text-slate-500 block">CARGO WEIGHT</span>
-                    <span className="font-bold text-xs">{shipment.weight} KG</span>
+                  {/* Package weight, level and billing terms */}
+                  <div className="grid grid-cols-3 gap-2 py-3 border-b border-slate-400 text-center">
+                    <div className="border-r border-slate-300">
+                      <span className="text-[7px] text-slate-500 block">CARGO WEIGHT</span>
+                      <span className="font-bold text-xs">{shipment.weight} KG</span>
+                    </div>
+                    <div className="border-r border-slate-300">
+                      <span className="text-[7px] text-slate-500 block">SERVICE TYPE</span>
+                      <span className="font-bold text-xs uppercase text-dhl-red truncate block px-0.5">{shipment.type}</span>
+                    </div>
+                    <div>
+                      <span className="text-[7px] text-slate-500 block">DELIVERY ZONE</span>
+                      <span className="font-bold text-xs">ZONE 9-EXP</span>
+                    </div>
                   </div>
-                  <div className="border-r border-slate-300">
-                    <span className="text-[7px] text-slate-500 block">SERVICE TYPE</span>
-                    <span className="font-bold text-xs uppercase text-dhl-red truncate block px-0.5">{shipment.type}</span>
-                  </div>
-                  <div>
-                    <span className="text-[7px] text-slate-500 block">DELIVERY ZONE</span>
-                    <span className="font-bold text-xs">ZONE 9-EXP</span>
-                  </div>
-                </div>
 
-                {/* Barcode Mockup */}
-                <div className="py-4 flex flex-col items-center justify-center space-y-2">
-                  {/* Styled Barcode Lines */}
-                  <div className="w-full h-12 flex items-center justify-center gap-[2px] bg-white px-2 rounded border border-slate-200">
-                    <div className="w-[3px] h-9 bg-slate-900 shrink-0" />
-                    <div className="w-[1px] h-9 bg-slate-900 shrink-0" />
-                    <div className="w-[4px] h-9 bg-slate-900 shrink-0" />
-                    <div className="w-[2px] h-9 bg-slate-900 shrink-0" />
-                    <div className="w-[1px] h-9 bg-slate-900 shrink-0" />
-                    <div className="w-[3px] h-9 bg-slate-900 shrink-0" />
-                    <div className="w-[5px] h-9 bg-slate-900 shrink-0" />
-                    <div className="w-[1px] h-9 bg-slate-900 shrink-0" />
-                    <div className="w-[3px] h-9 bg-slate-900 shrink-0" />
-                    <div className="w-[2px] h-9 bg-slate-900 shrink-0" />
-                    <div className="w-[1px] h-9 bg-slate-900 shrink-0" />
-                    <div className="w-[4px] h-9 bg-slate-900 shrink-0" />
-                    <div className="w-[2px] h-9 bg-slate-900 shrink-0" />
-                    <div className="w-[1px] h-9 bg-slate-900 shrink-0" />
-                    <div className="w-[5px] h-9 bg-slate-900 shrink-0" />
-                    <div className="w-[3px] h-9 bg-slate-900 shrink-0" />
-                    <div className="w-[1px] h-9 bg-slate-900 shrink-0" />
-                    <div className="w-[4px] h-9 bg-slate-900 shrink-0" />
-                    <div className="w-[2px] h-9 bg-slate-900 shrink-0" />
+                  {/* Barcode Mockup */}
+                  <div className="py-4 flex flex-col items-center justify-center space-y-2">
+                    {/* Styled Barcode Lines */}
+                    <div className="w-full h-12 flex items-center justify-center gap-[2px] bg-white px-2 rounded border border-slate-200">
+                      <div className="w-[3px] h-9 bg-slate-900 shrink-0" />
+                      <div className="w-[1px] h-9 bg-slate-900 shrink-0" />
+                      <div className="w-[4px] h-9 bg-slate-900 shrink-0" />
+                      <div className="w-[2px] h-9 bg-slate-900 shrink-0" />
+                      <div className="w-[1px] h-9 bg-slate-900 shrink-0" />
+                      <div className="w-[3px] h-9 bg-slate-900 shrink-0" />
+                      <div className="w-[5px] h-9 bg-slate-900 shrink-0" />
+                      <div className="w-[1px] h-9 bg-slate-900 shrink-0" />
+                      <div className="w-[3px] h-9 bg-slate-900 shrink-0" />
+                      <div className="w-[2px] h-9 bg-slate-900 shrink-0" />
+                      <div className="w-[1px] h-9 bg-slate-900 shrink-0" />
+                      <div className="w-[4px] h-9 bg-slate-900 shrink-0" />
+                      <div className="w-[2px] h-9 bg-slate-900 shrink-0" />
+                      <div className="w-[1px] h-9 bg-slate-900 shrink-0" />
+                      <div className="w-[5px] h-9 bg-slate-900 shrink-0" />
+                      <div className="w-[3px] h-9 bg-slate-900 shrink-0" />
+                      <div className="w-[1px] h-9 bg-slate-900 shrink-0" />
+                      <div className="w-[4px] h-9 bg-slate-900 shrink-0" />
+                      <div className="w-[2px] h-9 bg-slate-900 shrink-0" />
+                    </div>
+                    {/* Barcode Number label */}
+                    <span className="text-xs font-black tracking-widest text-slate-800">{shipment.id}</span>
                   </div>
-                  {/* Barcode Number label */}
-                  <span className="text-xs font-black tracking-widest text-slate-800">{shipment.id}</span>
-                </div>
 
-                <div className="text-[7px] text-slate-400 text-center leading-normal">
-                  OFFICIAL WAYBILL SECURITY CERTIFICATE • SUBJECT TO TERMS AND SLA DISPATCH POLICES
+                  <div className="text-[7px] text-slate-400 text-center leading-normal">
+                    OFFICIAL WAYBILL SECURITY CERTIFICATE • SUBJECT TO TERMS AND SLA DISPATCH POLICES
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* 2. SLA DYNAMIC SMS NOTIFICATIONS SIGNUP CARD */}
-            <div className="space-y-3">
-              <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider font-mono">Real-Time Alerts Dispatch</h3>
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="p-2.5 bg-dhl-yellow/15 text-dhl-red rounded-xl">
-                    <Bell size={18} className="animate-swing" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-black text-slate-800 dark:text-white font-sans">SLA SMS Notifications</h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed pt-0.5">
-                      Get instantaneous updates on transit exceptions, route diversions, or ETA delays sent to your mobile.
-                    </p>
-                  </div>
-                </div>
-
-                {smsSubscribed ? (
-                  <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 rounded-xl p-3 text-center space-y-1">
-                    <span className="text-emerald-700 dark:text-emerald-400 font-bold text-xs block">✓ Alerts Activated</span>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                      Real-time SMS stream registered for <span className="font-bold text-slate-800 dark:text-slate-200">{smsNumber}</span>
-                    </p>
-                  </div>
-                ) : (
-                  <form onSubmit={handleSmsSubscribe} className="space-y-2">
-                    <div className="flex gap-2">
-                      <input
-                        type="tel"
-                        required
-                        placeholder="+1 (555) 019-2834"
-                        value={smsNumber}
-                        onChange={(e) => setSmsNumber(e.target.value)}
-                        className="flex-1 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2 text-xs outline-none focus:border-dhl-red dark:focus:border-red-500 transition-all text-slate-800 dark:text-slate-100 font-mono"
-                      />
-                      <button
-                        type="submit"
-                        disabled={smsLoading}
-                        className="bg-dhl-red hover:bg-dhl-red-hover text-white font-black text-xs px-3 py-2 rounded-xl transition-all flex items-center gap-1 shrink-0 disabled:opacity-50 cursor-pointer"
-                      >
-                        {smsLoading ? (
-                          <Loader2 size={12} className="animate-spin" />
-                        ) : (
-                          <>Subscribe</>
-                        )}
-                      </button>
+            {settings?.trackerShowSmsAlerts !== false && (
+              <div className="space-y-3">
+                <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider font-mono">Real-Time Alerts Dispatch</h3>
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2.5 bg-dhl-yellow/15 text-dhl-red rounded-xl">
+                      <Bell size={18} className="animate-swing" />
                     </div>
-                    <span className="text-[8px] text-slate-400 font-mono block">Standard text carrier messaging rates may apply.</span>
-                  </form>
-                )}
+                    <div>
+                      <h4 className="text-sm font-black text-slate-800 dark:text-white font-sans">SLA SMS Notifications</h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed pt-0.5">
+                        Get instantaneous updates on transit exceptions, route diversions, or ETA delays sent to your mobile.
+                      </p>
+                    </div>
+                  </div>
+
+                  {smsSubscribed ? (
+                    <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 rounded-xl p-3 text-center space-y-1">
+                      <span className="text-emerald-700 dark:text-emerald-400 font-bold text-xs block">✓ Alerts Activated</span>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                        Real-time SMS stream registered for <span className="font-bold text-slate-800 dark:text-slate-200">{smsNumber}</span>
+                      </p>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleSmsSubscribe} className="space-y-2">
+                      <div className="flex gap-2">
+                        <input
+                          type="tel"
+                          required
+                          placeholder="+1 (555) 019-2834"
+                          value={smsNumber}
+                          onChange={(e) => setSmsNumber(e.target.value)}
+                          className="flex-1 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2 text-xs outline-none focus:border-dhl-red dark:focus:border-red-500 transition-all text-slate-800 dark:text-slate-100 font-mono"
+                        />
+                        <button
+                          type="submit"
+                          disabled={smsLoading}
+                          className="bg-dhl-red hover:bg-dhl-red-hover text-white font-black text-xs px-3 py-2 rounded-xl transition-all flex items-center gap-1 shrink-0 disabled:opacity-50 cursor-pointer"
+                        >
+                          {smsLoading ? (
+                            <Loader2 size={12} className="animate-spin" />
+                          ) : (
+                            <>Subscribe</>
+                          )}
+                        </button>
+                      </div>
+                      <span className="text-[8px] text-slate-400 font-mono block">Standard text carrier messaging rates may apply.</span>
+                    </form>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* 3. EMAIL STATUS UPDATES SIGNUP CARD WITH TOGGLE */}
+            {settings?.trackerShowEmailAlerts !== false && (
+              <div className="space-y-3">
+                <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider font-mono">Automated Email Registry</h3>
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                  
+                  {/* Header and Toggle Switch Row */}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl">
+                        <Mail size={18} />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black text-slate-800 dark:text-white font-sans">Subscribe to Updates</h4>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-normal pt-0.5">
+                          Register for automated email notifications on status changes.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Toggle Switch Button */}
+                    <button
+                      type="button"
+                      onClick={() => setIsEmailToggled(!isEmailToggled)}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        isEmailToggled ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'
+                      }`}
+                      aria-pressed={isEmailToggled}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          isEmailToggled ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Expanded/Toggled Form Panel */}
+                  <AnimatePresence initial={false}>
+                    {isEmailToggled && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25, ease: 'easeInOut' }}
+                        className="overflow-hidden"
+                      >
+                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                          {isEmailSubscribed ? (
+                            <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 rounded-xl p-3 text-center space-y-1">
+                              <span className="text-emerald-700 dark:text-emerald-400 font-bold text-xs block">✓ Subscribed to Updates</span>
+                              <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                                Registered: <span className="font-bold text-slate-800 dark:text-slate-200">{emailValue}</span>
+                              </p>
+                              {emailMessage && (
+                                <p className="text-[9px] text-emerald-600 dark:text-emerald-400 italic pt-1">{emailMessage}</p>
+                              )}
+                            </div>
+                          ) : (
+                            <form onSubmit={handleEmailSubscribe} className="space-y-2">
+                              <div className="flex gap-2">
+                                <input
+                                  type="email"
+                                  required
+                                  placeholder="your.email@example.com"
+                                  value={emailValue}
+                                  onChange={(e) => setEmailValue(e.target.value)}
+                                  className="flex-1 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2 text-xs outline-none focus:border-blue-500 transition-all text-slate-800 dark:text-slate-100 font-sans"
+                                />
+                                <button
+                                  type="submit"
+                                  disabled={emailLoading}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white font-black text-xs px-3 py-2 rounded-xl transition-all flex items-center gap-1 shrink-0 disabled:opacity-50 cursor-pointer"
+                                >
+                                  {emailLoading ? (
+                                    <Loader2 size={12} className="animate-spin" />
+                                  ) : (
+                                    <>Register</>
+                                  )}
+                                </button>
+                              </div>
+                              
+                              {emailMessage && (
+                                <div className={`p-2 rounded-lg text-[10px] font-medium ${
+                                  emailStatusType === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400' :
+                                  emailStatusType === 'info' ? 'bg-blue-50 text-blue-700 border border-blue-100 dark:bg-blue-950/20 dark:text-blue-400' :
+                                  'bg-rose-50 text-rose-700 border border-rose-100 dark:bg-rose-950/20 dark:text-rose-400'
+                                }`}>
+                                  {emailMessage}
+                                </div>
+                              )}
+
+                              <span className="text-[8px] text-slate-400 font-mono block">
+                                By registering, you agree to receive automated notifications triggered upon state change API calls.
+                              </span>
+                            </form>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+            )}
 
           </div>
 
@@ -1297,6 +2000,19 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
           </div>
         </div>
       )}
+
+      {/* Camera QR Scanner Overlay */}
+      <QrScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onScanSuccess={(decodedText) => {
+          setIsScannerOpen(false);
+          const sanitizedText = decodedText.trim();
+          setTrackId(sanitizedText);
+          fetchTrackingData(sanitizedText);
+        }}
+      />
     </div>
+  </div>
   );
 }

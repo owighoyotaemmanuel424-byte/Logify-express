@@ -7,6 +7,10 @@ import PublicTracker from './components/PublicTracker.tsx';
 import QuoteCalculator from './components/QuoteCalculator.tsx';
 import AdminPanel from './components/AdminPanel.tsx';
 import PublicLiveChat from './components/PublicLiveChat.tsx';
+import SendPackagePage from './components/pages/SendPackagePage.tsx';
+import PricingPage from './components/pages/PricingPage.tsx';
+import AboutPage from './components/pages/AboutPage.tsx';
+import AuthPage from './components/pages/AuthPage.tsx';
 import { User, Settings } from './types.js';
 
 export default function App() {
@@ -106,15 +110,23 @@ export default function App() {
       setView('home');
     } else if (path === '/track' || path === '/tracking') {
       setView('track');
+    } else if (path === '/send') {
+      setView('send');
+    } else if (path === '/pricing') {
+      setView('pricing');
+    } else if (path === '/about') {
+      setView('about');
     } else if (path === '/contact') {
       setView('contact');
+    } else if (path === '/login' || path === '/register' || path === '/auth' || path === '/admin-login') {
+      setView('auth');
     } else if (path === '/admin/login') {
-      setView('admin-login');
+      setView('auth');
     } else if (path === '/admin' || path.startsWith('/admin/')) {
       const storedToken = localStorage.getItem('logify_token');
       if (!storedToken) {
-        window.history.replaceState(null, '', '/admin/login');
-        setView('admin-login');
+        window.history.replaceState(null, '', '/login');
+        setView('auth');
       } else {
         setView('admin');
       }
@@ -158,12 +170,17 @@ export default function App() {
     let path = '/';
     if (newView === 'home') path = '/';
     else if (newView === 'track' || newView === 'tracking') path = '/track';
+    else if (newView === 'send') path = '/send';
+    else if (newView === 'pricing') path = '/pricing';
+    else if (newView === 'about') path = '/about';
     else if (newView === 'contact') path = '/contact';
-    else if (newView === 'admin-login') path = '/admin/login';
-    else if (newView === 'admin') {
+    else if (newView === 'auth' || newView === 'login' || newView === 'register' || newView === 'admin-login') {
+      path = '/login';
+      newView = 'auth';
+    } else if (newView === 'admin') {
       if (!token) {
-        path = '/admin/login';
-        newView = 'admin-login';
+        path = '/login';
+        newView = 'auth';
       } else {
         path = '/admin';
       }
@@ -321,32 +338,37 @@ export default function App() {
         name: 'Express Air Freight',
         desc: 'Global overnight delivery segments. Supported by expedited customs clearance waybills and high-priority airport warehouse priority handling.',
         specs: ['Overnight dispatch loops', 'AeroWaybill digital audit trails', 'Temperature-controlled cargo bays'],
+        image: '/src/assets/images/air_freight_solution_1784467339500.jpg',
       },
       {
         icon: <Ship className="text-amber-500 shrink-0" size={32} />,
         name: 'Continental Ocean Cargo',
         desc: 'High-volume sea freight distribution for heavy machinery, bulk merchandise, or full container loads (FCL) across global naval trade corridors.',
         specs: ['Seaport terminal custom logs', 'FCL & LCL storage units', 'Satellite waybill tracking telemetry'],
+        image: '/src/assets/images/ocean_cargo_solution_1784467350305.jpg',
       },
       {
         icon: <Truck className="text-amber-500 shrink-0" size={32} />,
         name: 'Last-Mile Express Distribution',
         desc: 'Localized parcel logistics, connecting commercial shipping depots straight to doorstep targets with extreme precision and real-time navigation updates.',
         specs: ['Guaranteed delivery corridors', 'Real-time driver location mapping', 'Paperless client-signature receipts'],
+        image: '/src/assets/images/last_mile_solution_1784467362755.jpg',
       },
       {
         icon: <Warehouse className="text-amber-500 shrink-0" size={32} />,
         name: 'Smart Storage & Warehousing',
         desc: 'Highly organized stock depots featuring advanced telemetry inventory indexing, real-time climate monitoring sensors, and bulk dispatch packing lines.',
         specs: ['Frictionless API stock audits', '24/7 camera monitoring feeds', 'Dynamic truck dispatch ramps'],
+        image: '/src/assets/images/warehouse_solution_1784467375578.jpg',
       },
     ];
 
     return (
-      <div className="max-w-6xl mx-auto px-4 py-16 space-y-12">
+      <div className="max-w-6xl mx-auto px-4 py-16 space-y-12 animate-fade-in">
         <div className="text-center space-y-3 max-w-xl mx-auto">
-          <h1 className="text-4xl font-sans font-black text-slate-900 dark:text-white">Commercial Logistics Segments</h1>
-          <p className="text-xs text-slate-500">
+          <span className="text-[10px] font-mono font-black text-[#D40511] uppercase tracking-widest block">Our Fleet Capabilities</span>
+          <h1 className="text-4xl font-sans font-black text-slate-900 dark:text-white uppercase tracking-tight">Commercial Logistics Divisions</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Logify operates an intelligent multi-modal delivery grid, matching automated vehicle dispatches with precise air, land, and sea operations.
           </p>
         </div>
@@ -355,20 +377,30 @@ export default function App() {
           {serviceTiers.map((tier, idx) => (
             <div
               key={idx}
-              className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-8 rounded-3xl shadow-md flex gap-6"
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col group text-left"
             >
-              <div className="w-16 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center shrink-0">
-                {tier.icon}
-              </div>
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white">{tier.name}</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">{tier.desc}</p>
+              <div className="relative h-48 sm:h-56 overflow-hidden bg-slate-100 dark:bg-slate-950">
+                <img
+                  src={tier.image}
+                  alt={tier.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute top-4 left-4 w-12 h-12 rounded-2xl bg-slate-950/85 backdrop-blur-md border border-white/10 flex items-center justify-center text-[#FFCC00] shadow-md">
+                  {tier.icon}
                 </div>
-                <div className="flex flex-wrap gap-2">
+              </div>
+              
+              <div className="p-6 sm:p-8 flex-1 flex flex-col justify-between space-y-5">
+                <div className="space-y-2">
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">{tier.name}</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{tier.desc}</p>
+                </div>
+                
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                   {tier.specs.map((s, sidx) => (
-                    <span key={sidx} className="text-[10px] bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 font-medium px-2.5 py-1 rounded-full">
-                      • {s}
+                    <span key={sidx} className="text-[10px] bg-slate-50 dark:bg-slate-800 border border-slate-150 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 font-bold px-3 py-1 rounded-full uppercase tracking-wider font-mono">
+                      {s}
                     </span>
                   ))}
                 </div>
@@ -552,7 +584,7 @@ export default function App() {
             <Loader2 className="text-amber-500 animate-spin" size={36} />
             <p className="text-xs font-mono text-slate-400 mt-2">Authenticating credentials...</p>
           </div>
-        ) : settings.isSiteActive === false && view !== 'admin' && view !== 'admin-login' ? (
+        ) : settings.isSiteActive === false && view !== 'admin' && view !== 'auth' ? (
           <MaintenancePage />
         ) : (
           <>
@@ -576,6 +608,27 @@ export default function App() {
               />
             )}
 
+            {view === 'send' && (
+              <SendPackagePage
+                settings={settings}
+                onNavigate={handleNavigate}
+                onSetTrackId={setTrackId}
+              />
+            )}
+
+            {view === 'pricing' && (
+              <PricingPage
+                settings={settings}
+                onNavigate={handleNavigate}
+              />
+            )}
+
+            {view === 'about' && (
+              <AboutPage
+                onNavigate={handleNavigate}
+              />
+            )}
+
             {view === 'quote' && (
               <QuoteCalculator
                 settings={settings}
@@ -588,7 +641,12 @@ export default function App() {
 
             {view === 'contact' && <ContactPage />}
 
-            {view === 'admin-login' && <LoginPage />}
+            {view === 'auth' && (
+              <AuthPage
+                onLoginSuccess={handleLoginSuccess}
+                onNavigate={handleNavigate}
+              />
+            )}
 
             {view === 'admin' && user && token && (
               <AdminPanel

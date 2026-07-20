@@ -8,6 +8,17 @@
   --color-dhl-yellow: #FFCC00;
   --color-dhl-red-hover: #b8000e;
   --color-dhl-yellow-hover: #e6b800;
+
+  --animate-scan: scan 2.5s ease-in-out infinite;
+
+  @keyframes scan {
+    0%, 100% {
+      top: 0%;
+    }
+    50% {
+      top: 100%;
+    }
+  }
 }
 
 @layer base {

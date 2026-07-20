@@ -53,6 +53,7 @@ export interface Shipment {
   labelDocData?: string;
   tag?: string; // Color-coded shipment tag, e.g. "In Transit", "Delayed", "Customs Hold", "Delivered"
   proofOfDelivery?: string; // Camera captured base64 image data of receipt
+  subscribers?: string[]; // Registered email addresses for status updates
 }
 
 export interface Driver {
@@ -92,6 +93,18 @@ export interface Settings {
   enableLiveChat?: boolean; // Toggle Live Chat System
   is2FAEnabled?: boolean; // Toggle 2FA security
   enableHighContrastStatus?: boolean; // Toggle High Contrast Status colors for dark mode
+  trackerShowMap?: boolean;
+  trackerShowThermalTag?: boolean;
+  trackerShowSmsAlerts?: boolean;
+  trackerShowEmailAlerts?: boolean;
+  trackerShowSimulation?: boolean;
+  trackerShowTelemetryDeck?: boolean;
+  trackerShowRouteVector?: boolean;
+  trackerShowShareButton?: boolean;
+  trackerShowEstimatedDelivery?: boolean;
+  trackerShowChronologyLog?: boolean;
+  trackerCustomBackgroundPreset?: 'red-yellow' | 'slate' | 'emerald' | 'cosmic' | 'cyber';
+  trackerCustomNotes?: string;
 }
 
 export interface Alert {
