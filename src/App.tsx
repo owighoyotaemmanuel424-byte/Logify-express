@@ -10,7 +10,7 @@ import PublicLiveChat from './components/PublicLiveChat.tsx';
 import SendPackagePage from './components/pages/SendPackagePage.tsx';
 import PricingPage from './components/pages/PricingPage.tsx';
 import AboutPage from './components/pages/AboutPage.tsx';
-import AuthPage from './components/pages/AuthPage.tsx';
+import AdminLogin from './pages/AdminLogin.tsx';
 import { User, Settings } from './types.js';
 
 export default function App() {
@@ -561,7 +561,7 @@ export default function App() {
             {view === 'contact' && <ContactPage />}
 
             {view === 'auth' && (
-              <AuthPage
+              <AdminLogin
                 onLoginSuccess={handleLoginSuccess}
                 onNavigate={handleNavigate}
               />
