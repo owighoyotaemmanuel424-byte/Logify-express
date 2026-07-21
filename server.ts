@@ -100,10 +100,20 @@ function verifyAdmin(req: any, res: any, next: any) {
   if (!decoded) {
     return res.status(401).json({ error: "Unauthorized: Invalid or expired token" });
   }
-  if (decoded.role !== "super_admin" || decoded.email !== "expresslogify@gmail.com") {
-    return res.status(403).json({ error: "Forbidden: Admin access only" });
+
+  // Look up user in database dynamically to secure roles
+  const db = readDB();
+  const user = db.users.find((u) => u.email.toLowerCase() === decoded.email.toLowerCase() || u.id === decoded.id);
+
+  if (!user) {
+    return res.status(403).json({ error: "Forbidden: User not found in database" });
   }
-  req.user = decoded;
+
+  if (user.role !== "super_admin") {
+    return res.status(403).json({ error: "Forbidden: super_admin access only" });
+  }
+
+  req.user = user;
   next();
 }
 
@@ -120,13 +130,30 @@ function readDB(): DBState {
     const content = fs.readFileSync(DB_PATH, "utf8");
     const parsed = JSON.parse(content) as DBState;
     if (parsed.users) {
-      parsed.users.forEach(u => {
-        if (u.email.toLowerCase() === "expresslogify@gmail.com") {
-          u.role = "super_admin";
-        } else {
-          u.role = "admin";
-        }
-      });
+      // Ensure the default super_admin is properly seeded
+      const hasSuperAdmin = parsed.users.some(u => u.email.toLowerCase() === "expresslogify@gmail.com");
+      if (!hasSuperAdmin) {
+        const salt = crypto.randomBytes(16).toString("hex");
+        const passwordHash = hashPassword("password123", salt);
+        parsed.users.push({
+          id: "super-admin-1",
+          email: "expresslogify@gmail.com",
+          name: "Logify Super Admin",
+          role: "super_admin",
+          status: "active",
+          phone: "+1 555-9999",
+          passwordHash,
+          salt,
+          createdAt: new Date().toISOString()
+        });
+        fs.writeFileSync(DB_PATH, JSON.stringify(parsed, null, 2), "utf8");
+      } else {
+        parsed.users.forEach(u => {
+          if (u.email.toLowerCase() === "expresslogify@gmail.com") {
+            u.role = "super_admin";
+          }
+        });
+      }
     }
     return parsed;
   } catch (error) {
@@ -408,36 +435,34 @@ const handleLoginRequest = async (req: any, res: any) => {
   const normalizedEmail = email.trim().toLowerCase();
 
   try {
-    // If Supabase is active, sign in with Supabase
-    if (supabase) {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: normalizedEmail,
-        password,
+    // Supabase Auth only (no fake login / local bypass)
+    if (!supabase) {
+      return res.status(500).json({
+        error: "Supabase Authentication is not configured on this environment. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to enable secure authentication."
       });
-      if (error) {
-        return res.status(401).json({ error: `Supabase login failed: ${error.message}` });
-      }
+    }
 
-      // Hard restriction: Only permit expresslogify@gmail.com
-      const isUserAdmin = normalizedEmail === "expresslogify@gmail.com";
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: normalizedEmail,
+      password,
+    });
+    if (error) {
+      return res.status(401).json({ error: `Supabase login failed: ${error.message}` });
+    }
 
-      if (!isUserAdmin) {
-        // Sign out unauthorized user immediately
-        await supabase.auth.signOut();
-        return res.status(403).json({ error: "Unauthorized access." });
-      }
-      
-      // Sync or retrieve user from local database
-      const db = readDB();
-      let user = db.users.find((u) => u.email.toLowerCase() === normalizedEmail);
-      if (!user) {
-        // If not found locally, create a local record for consistency across screens
+    // Sync or retrieve user from local database securely
+    const db = readDB();
+    let user = db.users.find((u) => u.email.toLowerCase() === normalizedEmail);
+
+    if (!user) {
+      // Auto-create default super admin locally if they exist in Supabase but not db.json
+      if (normalizedEmail === "expresslogify@gmail.com") {
         const salt = crypto.randomBytes(16).toString("hex");
         const passwordHash = hashPassword(password, salt);
         user = {
           id: data.user?.id || `user-${Math.floor(1000 + Math.random() * 9000)}`,
           email: normalizedEmail,
-          name: data.user?.user_metadata?.name || normalizedEmail.split("@")[0],
+          name: data.user?.user_metadata?.name || "Logify Super Admin",
           role: "super_admin",
           status: "active",
           phone: data.user?.user_metadata?.phone || "",
@@ -447,45 +472,33 @@ const handleLoginRequest = async (req: any, res: any) => {
         };
         db.users.push(user);
         writeDB(db);
-      } else if (user.role !== "super_admin") {
+      } else {
+        // Not a registered administrator in db.json, sign out of Supabase and block
+        await supabase.auth.signOut();
+        return res.status(403).json({ error: "Unauthorized access. This account is not registered as an administrator in the database." });
+      }
+    } else {
+      // Ensure super_admin role for expresslogify@gmail.com is set
+      if (normalizedEmail === "expresslogify@gmail.com" && user.role !== "super_admin") {
         user.role = "super_admin";
         writeDB(db);
       }
-      
-      const token = generateToken({ id: user.id, email: user.email, role: user.role });
-      const { passwordHash: _, salt: __, ...userResponse } = user;
-      return res.json({ user: userResponse, token });
     }
 
-    // Otherwise, use local database fallback
-    const db = readDB();
-    const user = db.users.find((u) => u.email.toLowerCase() === normalizedEmail);
-    if (!user) {
-      return res.status(401).json({ error: "Invalid email or password" });
-    }
-
-    const isUserAdmin = normalizedEmail === "expresslogify@gmail.com";
-    if (!isUserAdmin) {
-      return res.status(403).json({ error: "Unauthorized access." });
+    // Role-based access control check (must be super_admin to access dashboard)
+    if (user.role !== "super_admin") {
+      await supabase.auth.signOut();
+      return res.status(403).json({ error: "Unauthorized access. Only super_admin role is permitted." });
     }
 
     if (user.status === "suspended") {
+      await supabase.auth.signOut();
       return res.status(403).json({ error: "Your account has been suspended. Please contact support." });
-    }
-
-    const inputHash = hashPassword(password, user.salt);
-    if (inputHash !== user.passwordHash && password !== "password123") {
-      return res.status(401).json({ error: "Invalid email or password" });
-    }
-
-    if (user.role !== "super_admin") {
-      user.role = "super_admin";
-      writeDB(db);
     }
 
     const token = generateToken({ id: user.id, email: user.email, role: user.role });
     const { passwordHash: _, salt: __, ...userResponse } = user;
-    res.json({ user: userResponse, token });
+    return res.json({ user: userResponse, token });
   } catch (err: any) {
     console.error("Login exception:", err);
     res.status(500).json({ error: "Login service failure: " + err.message });

@@ -108,8 +108,7 @@ export default function App() {
       });
       if (response.ok) {
         const uData = await response.json();
-        const uEmail = uData?.email?.trim().toLowerCase();
-        const isSuperAdmin = uEmail === 'expresslogify@gmail.com' && uData?.role === 'super_admin';
+        const isSuperAdmin = uData?.role === 'super_admin';
         if (!isSuperAdmin) {
           // Immediately sign out and redirect to the admin login page
           localStorage.removeItem('logify_token');

@@ -52,10 +52,8 @@ export default function AuthPage({ onLoginSuccess, onNavigate }: AuthPageProps) 
         throw new Error(data.error || 'Invalid credentials or connection issue.');
       }
 
-      // Check if user is an authorized admin email and has appropriate role
-      const isAdmin = normalizedEmail === 'expresslogify@gmail.com' && (
-        data.user?.role === 'super_admin' || data.user?.role === 'admin'
-      );
+      // Check if user has appropriate super_admin role
+      const isAdmin = data.user?.role === 'super_admin';
 
       if (!isAdmin) {
         throw new Error('Unauthorized access. Only authenticated users with super_admin role can access the administration dashboard.');
