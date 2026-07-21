@@ -23,10 +23,10 @@ export default function AuthPage({ onLoginSuccess, onNavigate }: AuthPageProps) 
       if (params.get('expired') === 'true') {
         setError('Session expired. Please log in again.');
         // Clean URL parameter
-        window.history.replaceState(null, '', '/admin/login');
+        window.history.replaceState(null, '', '/secure-admin-portal-9x7k');
       } else if (params.get('unauthorized') === 'true') {
         setError('Unauthorized access. Only authorized administrators are permitted to enter this workspace.');
-        window.history.replaceState(null, '', '/admin/login');
+        window.history.replaceState(null, '', '/secure-admin-portal-9x7k');
       }
     } catch (e) {}
   }, []);
@@ -109,7 +109,7 @@ export default function AuthPage({ onLoginSuccess, onNavigate }: AuthPageProps) 
             <input
               type="email"
               required
-              placeholder="e.g. expresslogify@gmail.com"
+              placeholder="e.g. admin@logify.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition-all text-slate-900 dark:text-white"

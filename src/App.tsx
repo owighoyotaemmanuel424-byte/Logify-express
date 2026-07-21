@@ -108,15 +108,18 @@ export default function App() {
       });
       if (response.ok) {
         const uData = await response.json();
-        const isSuperAdmin = uData?.role === 'super_admin';
+        const uEmail = uData?.email?.trim().toLowerCase();
+        const isAllowedAdmin = uEmail === 'admin@logify.com' || uEmail === 'expresslogify@gmail.com';
+        const isSuperAdmin = uData?.role === 'super_admin' && isAllowedAdmin;
+        
         if (!isSuperAdmin) {
-          // Immediately sign out and redirect to the admin login page
+          // Immediately sign out and redirect silently to the homepage (do not expose error details)
           localStorage.removeItem('logify_token');
           document.cookie = `logify_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; Secure`;
           setToken(null);
           setUser(null);
-          window.history.replaceState(null, '', '/admin/login?unauthorized=true');
-          setView('auth');
+          window.history.replaceState(null, '', '/');
+          setView('home');
         } else {
           setUser(uData);
         }
@@ -145,18 +148,31 @@ export default function App() {
       setView('about');
     } else if (path === '/contact') {
       setView('contact');
-    } else if (path === '/admin/login') {
+    } else if (path === '/secure-admin-portal-9x7k') {
       setView('auth');
-    } else if (path === '/login' || path === '/register' || path === '/auth' || path === '/admin-login') {
+    } else if (path === '/login' || path === '/register' || path === '/auth' || path === '/admin-login' || path === '/admin/login') {
       // Secretly deflect any user trying public standard paths to the main landing page
       window.history.replaceState(null, '', '/');
       setView('home');
-    } else if (path === '/admin' || path.startsWith('/admin/')) {
+    } else if (path === '/admin' || path === '/admin/dashboard' || path.startsWith('/admin/')) {
       const storedToken = localStorage.getItem('logify_token');
       if (!storedToken) {
-        window.history.replaceState(null, '', '/admin/login');
+        window.history.replaceState(null, '', '/secure-admin-portal-9x7k');
         setView('auth');
       } else {
+        if (user) {
+          const uEmail = user.email?.trim().toLowerCase();
+          const isAllowedAdmin = uEmail === 'admin@logify.com' || uEmail === 'expresslogify@gmail.com';
+          if (!isAllowedAdmin || user.role !== 'super_admin') {
+            localStorage.removeItem('logify_token');
+            document.cookie = `logify_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; Secure`;
+            setToken(null);
+            setUser(null);
+            window.history.replaceState(null, '', '/');
+            setView('home');
+            return;
+          }
+        }
         setView('admin');
       }
     } else {
@@ -189,8 +205,8 @@ export default function App() {
     setToken(authToken);
     setUser(loggedUser);
     
-    // Redirect directly to admin panel for full administrative control
-    window.history.pushState(null, '', '/admin');
+    // Redirect directly to admin dashboard
+    window.history.pushState(null, '', '/admin/dashboard');
     setView('admin');
   };
 
@@ -205,10 +221,10 @@ export default function App() {
     setUser(null);
     
     if (expired) {
-      window.history.pushState(null, '', '/admin/login?expired=true');
+      window.history.pushState(null, '', '/secure-admin-portal-9x7k?expired=true');
       setView('auth');
     } else {
-      window.history.pushState(null, '', '/admin/login');
+      window.history.pushState(null, '', '/secure-admin-portal-9x7k');
       setView('auth');
     }
   };
@@ -223,13 +239,13 @@ export default function App() {
     else if (newView === 'about') path = '/about';
     else if (newView === 'contact') path = '/contact';
     else if (newView === 'auth') {
-      path = '/admin/login';
+      path = '/secure-admin-portal-9x7k';
     } else if (newView === 'admin') {
       if (!token) {
-        path = '/admin/login';
+        path = '/secure-admin-portal-9x7k';
         newView = 'auth';
       } else {
-        path = '/admin';
+        path = '/admin/dashboard';
       }
     } else {
       path = '/' + newView;

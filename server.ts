@@ -130,29 +130,44 @@ function readDB(): DBState {
     const content = fs.readFileSync(DB_PATH, "utf8");
     const parsed = JSON.parse(content) as DBState;
     if (parsed.users) {
-      // Ensure the default super_admin is properly seeded
-      const hasSuperAdmin = parsed.users.some(u => u.email.toLowerCase() === "expresslogify@gmail.com");
-      if (!hasSuperAdmin) {
-        const salt = crypto.randomBytes(16).toString("hex");
-        const passwordHash = hashPassword("password123", salt);
-        parsed.users.push({
-          id: "super-admin-1",
-          email: "expresslogify@gmail.com",
-          name: "Logify Super Admin",
-          role: "super_admin",
-          status: "active",
-          phone: "+1 555-9999",
-          passwordHash,
-          salt,
-          createdAt: new Date().toISOString()
-        });
+      // Ensure the default super_admins are properly seeded
+      const superAdmins = [
+        { email: "expresslogify@gmail.com", id: "super-admin-1", name: "Logify Super Admin" },
+        { email: "admin@logify.com", id: "super-admin-2", name: "Logify Admin" }
+      ];
+
+      let updated = false;
+      superAdmins.forEach(sa => {
+        const hasAdmin = parsed.users.some(u => u.email.toLowerCase() === sa.email);
+        if (!hasAdmin) {
+          const salt = crypto.randomBytes(16).toString("hex");
+          const passwordHash = hashPassword("password123", salt);
+          parsed.users.push({
+            id: sa.id,
+            email: sa.email,
+            name: sa.name,
+            role: "super_admin",
+            status: "active",
+            phone: "+1 555-9999",
+            passwordHash,
+            salt,
+            createdAt: new Date().toISOString()
+          });
+          updated = true;
+        } else {
+          parsed.users.forEach(u => {
+            if (u.email.toLowerCase() === sa.email) {
+              if (u.role !== "super_admin") {
+                u.role = "super_admin";
+                updated = true;
+              }
+            }
+          });
+        }
+      });
+
+      if (updated) {
         fs.writeFileSync(DB_PATH, JSON.stringify(parsed, null, 2), "utf8");
-      } else {
-        parsed.users.forEach(u => {
-          if (u.email.toLowerCase() === "expresslogify@gmail.com") {
-            u.role = "super_admin";
-          }
-        });
       }
     }
     return parsed;
@@ -210,6 +225,7 @@ function seedDatabase(): DBState {
   // Seed default users
   const seedUsers = [
     { id: "super-admin-1", email: "expresslogify@gmail.com", name: "Logify Super Admin", role: "super_admin" as const, phone: "+1 555-9999" },
+    { id: "super-admin-2", email: "admin@logify.com", name: "Logify Admin", role: "super_admin" as const, phone: "+1 555-9999" },
     { id: "admin-1", email: "sarah@logify.com", name: "Sarah Jenkins (Admin)", role: "admin" as const, phone: "+1 555-0100" },
     { id: "user-1", email: "client@logify.com", name: "Alex Mercer (Client)", role: "admin" as const, phone: "+1 555-0101" },
     { id: "driver-1", email: "courier@logify.com", name: "John Doe (Van Driver)", role: "admin" as const, phone: "+1 555-0102" },
@@ -454,15 +470,17 @@ const handleLoginRequest = async (req: any, res: any) => {
     const db = readDB();
     let user = db.users.find((u) => u.email.toLowerCase() === normalizedEmail);
 
+    const isSuperAdminEmail = normalizedEmail === "expresslogify@gmail.com" || normalizedEmail === "admin@logify.com";
+
     if (!user) {
       // Auto-create default super admin locally if they exist in Supabase but not db.json
-      if (normalizedEmail === "expresslogify@gmail.com") {
+      if (isSuperAdminEmail) {
         const salt = crypto.randomBytes(16).toString("hex");
         const passwordHash = hashPassword(password, salt);
         user = {
           id: data.user?.id || `user-${Math.floor(1000 + Math.random() * 9000)}`,
           email: normalizedEmail,
-          name: data.user?.user_metadata?.name || "Logify Super Admin",
+          name: data.user?.user_metadata?.name || (normalizedEmail === "admin@logify.com" ? "Logify Admin" : "Logify Super Admin"),
           role: "super_admin",
           status: "active",
           phone: data.user?.user_metadata?.phone || "",
@@ -478,8 +496,8 @@ const handleLoginRequest = async (req: any, res: any) => {
         return res.status(403).json({ error: "Unauthorized access. This account is not registered as an administrator in the database." });
       }
     } else {
-      // Ensure super_admin role for expresslogify@gmail.com is set
-      if (normalizedEmail === "expresslogify@gmail.com" && user.role !== "super_admin") {
+      // Ensure super_admin role is set for our designated super admin emails
+      if (isSuperAdminEmail && user.role !== "super_admin") {
         user.role = "super_admin";
         writeDB(db);
       }
