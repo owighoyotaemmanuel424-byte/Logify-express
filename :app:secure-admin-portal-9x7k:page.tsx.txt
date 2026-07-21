@@ -1,0 +1,8 @@
+export default function AdminEntry() {
+  return (
+    <div style={{ padding: 20 }}>
+      <h1>LOGIFY WORKSPACE ACCESS</h1>
+      <p>Admin login page</p>
+    </div>
+  );
+}
