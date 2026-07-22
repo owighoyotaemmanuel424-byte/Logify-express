@@ -5,7 +5,6 @@ import crypto from "crypto";
 import dotenv from "dotenv";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
-import { createClient } from "@supabase/supabase-js";
 import { DBState, User, Shipment, Driver, Payment, Settings, TimelineEvent } from "./src/types.js";
 
 dotenv.config();
@@ -16,22 +15,6 @@ function reportExpressErrorsAndGetApp() {
 }
 const PORT = 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "logify_super_secret_key_123456789";
-
-// Initialize Supabase Client dynamically for secure authentications
-const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "";
-
-let supabase: any = null;
-if (supabaseUrl && supabaseAnonKey) {
-  try {
-    supabase = createClient(supabaseUrl, supabaseAnonKey);
-    console.log("[Auth] Supabase Client successfully initialized for authentication.");
-  } catch (error) {
-    console.error("[Auth] Failed to initialize Supabase client:", error);
-  }
-} else {
-  console.log("[Auth] Supabase credentials not set in environment. Running in hybrid local auth mode.");
-}
 
 
 // Ensure data directory exists
@@ -436,7 +419,7 @@ app.get("/api/shipments/track/:id", trackingRateLimiter, (req, res) => {
   res.json(shipment);
 });
 
-// Admin-Only & Auth Login/Register Routes with Supabase Support
+// Admin-Only & Auth Login/Register Routes
 app.post("/api/auth/register", async (req, res) => {
   return res.status(403).json({ error: "Registration is strictly disabled in this workspace. Administrative access only." });
 });
@@ -450,89 +433,39 @@ const handleLoginRequest = async (req: any, res: any) => {
   const normalizedEmail = email.trim().toLowerCase();
 
   try {
-    let authenticatedUser: any = null;
+    const db = readDB();
+    let user = db.users.find((u) => u.email.toLowerCase() === normalizedEmail);
 
-    // 1. Try Supabase Auth first if available
-    if (supabase) {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: normalizedEmail,
-        password,
-      });
-
-      if (!error && data?.user) {
-        const db = readDB();
-        let user = db.users.find((u) => u.email.toLowerCase() === normalizedEmail);
-        const isSuperAdminEmail = normalizedEmail === "owighoyotaemmanuel424@gmail.com";
-
-        if (!user && isSuperAdminEmail) {
-          const salt = crypto.randomBytes(16).toString("hex");
-          const passwordHash = hashPassword(password, salt);
-          user = {
-            id: data.user.id || `user-${Math.floor(1000 + Math.random() * 9000)}`,
-            email: normalizedEmail,
-            name: data.user.user_metadata?.name || "Logify Super Admin",
-            role: "super_admin",
-            status: "active",
-            phone: data.user.user_metadata?.phone || "",
-            passwordHash,
-            salt,
-            createdAt: new Date().toISOString(),
-          };
-          db.users.push(user);
-          writeDB(db);
-        }
-
-        if (user) {
-          authenticatedUser = user;
-        }
-      }
+    if (!user) {
+      return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    // 2. Fallback to Local DB Authentication (if Supabase not initialized or user not found in Supabase)
-    if (!authenticatedUser) {
-      const db = readDB();
-      const user = db.users.find((u) => u.email.toLowerCase() === normalizedEmail);
+    const inputHash = hashPassword(password, user.salt);
+    const isPasswordCorrect =
+      inputHash === user.passwordHash ||
+      (normalizedEmail === "owighoyotaemmanuel424@gmail.com" && password === "Owighoyota12345");
 
-      if (user) {
-        const inputHash = hashPassword(password, user.salt);
-        const isPasswordCorrect =
-          inputHash === user.passwordHash ||
-          (normalizedEmail === "owighoyotaemmanuel424@gmail.com" && password === "Owighoyota12345");
-
-        if (isPasswordCorrect) {
-          authenticatedUser = user;
-        }
-      }
-    }
-
-    if (!authenticatedUser) {
+    if (!isPasswordCorrect) {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
     const isSuperAdminEmail = normalizedEmail === "owighoyotaemmanuel424@gmail.com";
-    if (isSuperAdminEmail && authenticatedUser.role !== "super_admin") {
-      authenticatedUser.role = "super_admin";
-      const db = readDB();
-      const dbUser = db.users.find(u => u.email.toLowerCase() === normalizedEmail);
-      if (dbUser) {
-        dbUser.role = "super_admin";
-        writeDB(db);
-      }
+    if (isSuperAdminEmail && user.role !== "super_admin") {
+      user.role = "super_admin";
+      writeDB(db);
     }
 
     // Role-based access control check (must be super_admin to access dashboard)
-    if (authenticatedUser.role !== "super_admin") {
-      if (supabase) await supabase.auth.signOut();
+    if (user.role !== "super_admin") {
       return res.status(403).json({ error: "Unauthorized access. Only super_admin role is permitted." });
     }
 
-    if (authenticatedUser.status === "suspended") {
-      if (supabase) await supabase.auth.signOut();
+    if (user.status === "suspended") {
       return res.status(403).json({ error: "Your account has been suspended. Please contact support." });
     }
 
-    const token = generateToken({ id: authenticatedUser.id, email: authenticatedUser.email, role: authenticatedUser.role });
-    const { passwordHash: _, salt: __, ...userResponse } = authenticatedUser;
+    const token = generateToken({ id: user.id, email: user.email, role: user.role });
+    const { passwordHash: _, salt: __, ...userResponse } = user;
     return res.json({ user: userResponse, token });
   } catch (err: any) {
     console.error("Login exception:", err);
@@ -550,50 +483,17 @@ app.get("/api/auth/verify-session", async (req: any, res) => {
   }
   const token = authHeader.split(" ")[1];
 
-  let verifiedUser: any = null;
-
-  // 1. If Supabase client exists, attempt validating token with Supabase directly
-  if (supabase) {
-    try {
-      const { data: sbUser, error: sbErr } = await supabase.auth.getUser(token);
-      if (!sbErr && sbUser?.user) {
-        const userEmail = sbUser.user.email?.toLowerCase();
-        const db = readDB();
-        const dbUser = db.users.find((u) => u.email.toLowerCase() === userEmail);
-        const isSuperAdmin = userEmail === "owighoyotaemmanuel424@gmail.com" || dbUser?.role === "super_admin";
-        if (isSuperAdmin) {
-          verifiedUser = {
-            id: sbUser.user.id,
-            email: userEmail,
-            name: sbUser.user.user_metadata?.name || "Logify Super Admin",
-            role: "super_admin",
-            status: "active",
-          };
-        }
-      }
-    } catch (e) {
-      console.warn("[Auth] Supabase token check error, falling back to JWT:", e);
+  const decoded = verifyToken(token);
+  if (decoded) {
+    const db = readDB();
+    const user = db.users.find((u) => u.email.toLowerCase() === decoded.email.toLowerCase() || u.id === decoded.id);
+    if (user && (user.role === "super_admin" || user.email.toLowerCase() === "owighoyotaemmanuel424@gmail.com")) {
+      const { passwordHash: _, salt: __, ...userResponse } = user;
+      return res.json({ valid: true, user: { ...userResponse, role: "super_admin" } });
     }
   }
 
-  // 2. Fallback to native JWT verification & local DB check
-  if (!verifiedUser) {
-    const decoded = verifyToken(token);
-    if (decoded) {
-      const db = readDB();
-      const user = db.users.find((u) => u.email.toLowerCase() === decoded.email.toLowerCase() || u.id === decoded.id);
-      if (user && (user.role === "super_admin" || user.email.toLowerCase() === "owighoyotaemmanuel424@gmail.com")) {
-        const { passwordHash: _, salt: __, ...userResponse } = user;
-        verifiedUser = { ...userResponse, role: "super_admin" };
-      }
-    }
-  }
-
-  if (verifiedUser && verifiedUser.role === "super_admin") {
-    return res.json({ valid: true, user: verifiedUser });
-  } else {
-    return res.status(403).json({ valid: false, error: "Unauthorized access or non-admin session" });
-  }
+  return res.status(403).json({ valid: false, error: "Unauthorized access or non-admin session" });
 });
 
 app.get("/api/auth/profile", authenticate, (req: any, res) => {
