@@ -18,20 +18,21 @@ const PORT = 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "logify_super_secret_key_123456789";
 
 // Initialize Supabase Client dynamically for secure authentications
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "";
 
 let supabase: any = null;
 if (supabaseUrl && supabaseAnonKey) {
   try {
     supabase = createClient(supabaseUrl, supabaseAnonKey);
-    console.log("[Auth] Supabase Client successfully initialized for real authentication.");
+    console.log("[Auth] Supabase Client successfully initialized for authentication.");
   } catch (error) {
     console.error("[Auth] Failed to initialize Supabase client:", error);
   }
 } else {
-  console.log("[Auth] Using secure, high-availability local JSON DB for authentication fallback.");
+  console.log("[Auth] Supabase credentials not set in environment. Running in hybrid local auth mode.");
 }
+
 
 // Ensure data directory exists
 const DATA_DIR = path.join(process.cwd(), "data");
