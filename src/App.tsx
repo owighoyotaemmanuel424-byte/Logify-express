@@ -144,32 +144,33 @@ export default function App() {
       setView('about');
     } else if (path === '/contact') {
       setView('contact');
-    } else if (path === '/admin/login' || path === '/admin-login' || path === '/secure-admin-portal-9x7k') {
+    } else if (path === '/secure-admin-portal-9x7k') {
       setView('auth');
+    } else if (path === '/login' || path === '/register' || path === '/auth' || path === '/admin-login' || path === '/admin/login') {
+      // Secretly deflect any user trying public standard paths to the main landing page
+      window.history.replaceState(null, '', '/');
+      setView('home');
     } else if (path === '/admin' || path === '/admin/dashboard' || path.startsWith('/admin/')) {
       const storedToken = localStorage.getItem('logify_token');
       if (!storedToken) {
-        window.history.replaceState(null, '', '/admin/login');
+        window.history.replaceState(null, '', '/secure-admin-portal-9x7k');
         setView('auth');
       } else {
         if (user) {
           const uEmail = user.email?.trim().toLowerCase();
           const isAllowedAdmin = uEmail === 'owighoyotaemmanuel424@gmail.com';
-          if (!isAllowedAdmin || (user.role !== 'super_admin' && user.role !== 'admin')) {
+          if (!isAllowedAdmin || user.role !== 'super_admin') {
             localStorage.removeItem('logify_token');
             document.cookie = `logify_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; Secure`;
             setToken(null);
             setUser(null);
-            window.history.replaceState(null, '', '/admin/login');
-            setView('auth');
+            window.history.replaceState(null, '', '/');
+            setView('home');
             return;
           }
         }
         setView('admin');
       }
-    } else if (path === '/login' || path === '/register' || path === '/auth') {
-      window.history.replaceState(null, '', '/admin/login');
-      setView('auth');
     } else {
       setView('home');
     }
@@ -216,10 +217,10 @@ export default function App() {
     setUser(null);
     
     if (expired) {
-      window.history.pushState(null, '', '/admin/login?expired=true');
+      window.history.pushState(null, '', '/secure-admin-portal-9x7k?expired=true');
       setView('auth');
     } else {
-      window.history.pushState(null, '', '/admin/login');
+      window.history.pushState(null, '', '/secure-admin-portal-9x7k');
       setView('auth');
     }
   };
@@ -234,10 +235,10 @@ export default function App() {
     else if (newView === 'about') path = '/about';
     else if (newView === 'contact') path = '/contact';
     else if (newView === 'auth') {
-      path = '/admin/login';
+      path = '/secure-admin-portal-9x7k';
     } else if (newView === 'admin') {
       if (!token) {
-        path = '/admin/login';
+        path = '/secure-admin-portal-9x7k';
         newView = 'auth';
       } else {
         path = '/admin/dashboard';
