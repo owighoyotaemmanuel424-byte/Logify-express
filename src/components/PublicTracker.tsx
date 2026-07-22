@@ -524,58 +524,38 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
   };
 
   const getBackgroundPresetStyles = () => {
-    const preset = settings?.trackerCustomBackgroundPreset || 'red-yellow';
+    const preset = settings?.trackerCustomBackgroundPreset || 'dark-ash';
     switch (preset) {
-      case 'slate':
-        return {
-          wrapper: 'bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-6 md:p-10 rounded-3xl shadow-sm transition-all duration-300',
-          cardBorder: 'border-slate-500 dark:border-slate-400',
-          accentText: 'text-slate-600 dark:text-slate-300',
-          accentBg: 'bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-500/20',
-          btn: 'bg-slate-700 hover:bg-slate-800 text-white shadow-slate-600/10 focus:border-slate-500 dark:focus:border-slate-400',
-          logoColor: 'text-slate-700 dark:text-slate-200',
-          logoTag: 'bg-slate-700 text-white',
-        };
       case 'emerald':
         return {
-          wrapper: 'bg-emerald-50/10 dark:bg-emerald-950/10 border border-emerald-100 dark:border-emerald-900/40 p-6 md:p-10 rounded-3xl shadow-sm transition-all duration-300',
-          cardBorder: 'border-emerald-600 dark:border-emerald-500',
-          accentText: 'text-emerald-600 dark:text-emerald-400',
-          accentBg: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
-          btn: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/10 focus:border-emerald-500 dark:focus:border-emerald-400',
-          logoColor: 'text-emerald-600 dark:text-emerald-400',
-          logoTag: 'bg-emerald-600 text-white',
+          wrapper: 'bg-[#0f1d19] border border-emerald-900/60 p-6 md:p-10 rounded-3xl shadow-2xl transition-all duration-300 text-slate-100',
+          cardBorder: 'border-emerald-500',
+          accentText: 'text-emerald-400',
+          accentBg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+          btn: 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20 focus:border-emerald-400',
+          logoColor: 'text-emerald-400',
+          logoTag: 'bg-emerald-500 text-slate-950 font-black',
         };
       case 'cosmic':
         return {
-          wrapper: 'bg-[#121324]/10 dark:bg-[#0c0d19]/60 border border-indigo-950/40 dark:border-indigo-900/40 p-6 md:p-10 rounded-3xl shadow-sm transition-all duration-300',
-          cardBorder: 'border-indigo-600 dark:border-indigo-500',
-          accentText: 'text-indigo-600 dark:text-indigo-400',
-          accentBg: 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/20',
-          btn: 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/10 focus:border-indigo-500 dark:focus:border-indigo-400',
-          logoColor: 'text-indigo-500 dark:text-indigo-300',
+          wrapper: 'bg-[#0d0e19] border border-indigo-900/60 p-6 md:p-10 rounded-3xl shadow-2xl transition-all duration-300 text-slate-100',
+          cardBorder: 'border-indigo-500',
+          accentText: 'text-indigo-400',
+          accentBg: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+          btn: 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20 focus:border-indigo-400',
+          logoColor: 'text-indigo-400',
           logoTag: 'bg-indigo-600 text-white',
         };
-      case 'cyber':
-        return {
-          wrapper: 'bg-yellow-500/5 dark:bg-zinc-950/80 border border-yellow-500/20 dark:border-yellow-500/10 p-6 md:p-10 rounded-3xl shadow-sm transition-all duration-300',
-          cardBorder: 'border-yellow-400 dark:border-yellow-300',
-          accentText: 'text-yellow-600 dark:text-yellow-400',
-          accentBg: 'bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/30',
-          btn: 'bg-zinc-900 hover:bg-black text-yellow-400 font-mono border border-yellow-400/50 shadow-yellow-500/5 focus:border-yellow-400 dark:focus:border-yellow-300',
-          logoColor: 'text-zinc-900 dark:text-yellow-400 font-mono',
-          logoTag: 'bg-yellow-400 text-zinc-950 font-black',
-        };
-      case 'red-yellow':
+      case 'dark-ash':
       default:
         return {
-          wrapper: '',
-          cardBorder: 'border-dhl-red dark:border-red-600',
-          accentText: 'text-dhl-red dark:text-red-400',
-          accentBg: 'bg-dhl-yellow/15 text-dhl-red border-dhl-yellow/30',
-          btn: 'bg-dhl-red hover:bg-dhl-red-hover text-white shadow-red-500/10 focus:border-dhl-red dark:focus:border-red-500',
-          logoColor: 'text-dhl-red',
-          logoTag: 'bg-dhl-red text-white',
+          wrapper: 'bg-[#121418] border border-[#282d3b] p-6 md:p-10 rounded-3xl shadow-2xl transition-all duration-300 text-slate-100',
+          cardBorder: 'border-amber-500',
+          accentText: 'text-amber-400',
+          accentBg: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+          btn: 'bg-amber-500 hover:bg-amber-400 text-slate-950 font-black shadow-amber-500/20 focus:border-amber-400',
+          logoColor: 'text-amber-400',
+          logoTag: 'bg-amber-500 text-slate-950 font-black',
         };
     }
   };
@@ -583,7 +563,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
   const presetStyle = getBackgroundPresetStyles();
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 md:py-12 space-y-8 min-h-[70vh]">
+    <div className="max-w-7xl mx-auto px-4 py-8 md:py-12 space-y-8 min-h-[70vh] bg-[#121418] text-slate-100 rounded-3xl">
       <div className={presetStyle.wrapper}>
         {/* FedEx Style Corporate Header Branding */}
         <div className="text-center space-y-4 max-w-2xl mx-auto">
@@ -591,10 +571,10 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
             <span className={`text-4xl font-black tracking-tighter ${presetStyle.logoColor}`}>Logify</span>
             <span className={`${presetStyle.logoTag} text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider`}>Express®</span>
           </div>
-          <h1 className="text-xl md:text-2xl font-sans font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight">
+          <h1 className="text-xl md:text-2xl font-sans font-bold text-slate-100 uppercase tracking-tight">
             Global Logistics Waybill Tracking
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+          <p className="text-xs text-slate-400 max-w-md mx-auto">
             Input your 12-digit tracking reference code below to view active status, scheduled milestones, and live driver telemetry feeds.
           </p>
         </div>
@@ -609,21 +589,21 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                 placeholder="Enter Tracking Number (e.g. LOG-583019-US)"
                 value={trackId}
                 onChange={(e) => setTrackId(e.target.value)}
-                className="w-full bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl pl-4 pr-12 py-3.5 text-sm font-mono text-slate-900 dark:text-white placeholder-slate-400 outline-none transition-colors shadow-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full bg-[#1a1d25] border-2 border-[#2b303d] rounded-xl pl-4 pr-12 py-3.5 text-sm font-mono text-white placeholder-slate-400 outline-none transition-colors shadow-sm focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
               />
               <button
                 type="button"
                 onClick={() => setIsScannerOpen(true)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer flex items-center justify-center border border-slate-200/40 dark:border-slate-700/40"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-[#242936] hover:bg-[#2e3444] text-slate-200 transition-colors cursor-pointer flex items-center justify-center border border-[#2b303d]"
                 title="Scan QR Code / Barcode with Camera"
               >
-                <QrCode size={18} className="text-dhl-red dark:text-red-500" />
+                <QrCode size={18} className="text-amber-400" />
               </button>
             </div>
             <button
               type="submit"
               disabled={loading}
-              className={`px-6 py-3.5 disabled:opacity-50 text-white text-xs font-black uppercase tracking-wider rounded-xl flex items-center gap-2 transition-all cursor-pointer ${presetStyle.btn}`}
+              className={`px-6 py-3.5 disabled:opacity-50 text-xs font-black uppercase tracking-wider rounded-xl flex items-center gap-2 transition-all cursor-pointer ${presetStyle.btn}`}
             >
               {loading ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
               Track Status
@@ -631,13 +611,13 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
           </form>
 
         {trackId.trim() && partner && (
-          <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/80 px-4 py-2.5 rounded-xl text-left animate-in fade-in slide-in-from-top-1 duration-200 shadow-sm">
-            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono shrink-0">Auto-Detected Carrier:</span>
+          <div className="flex items-center gap-2 bg-[#1a1d25] border border-[#2b303d] px-4 py-2.5 rounded-xl text-left animate-in fade-in slide-in-from-top-1 duration-200 shadow-sm">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono shrink-0">Auto-Detected Carrier:</span>
             <span className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider font-mono shrink-0 ${partner.badgeClass}`}>
               {partner.icon}
               {partner.name}
             </span>
-            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono hidden sm:inline truncate">— {partner.description}</span>
+            <span className="text-[10px] text-slate-400 font-mono hidden sm:inline truncate">— {partner.description}</span>
           </div>
         )}
         
@@ -646,14 +626,14 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
           <span>Demo References:</span>
           <button 
             onClick={() => { setTrackId('LOG-583019-US'); fetchTrackingData('LOG-583019-US'); }}
-            className="underline hover:text-dhl-red transition-colors"
+            className="underline hover:text-amber-400 transition-colors"
           >
             LOG-583019-US
           </button>
           <span>•</span>
           <button 
             onClick={() => { setTrackId('LOG-194820-US'); fetchTrackingData('LOG-194820-US'); }}
-            className="underline hover:text-dhl-red transition-colors"
+            className="underline hover:text-amber-400 transition-colors"
           >
             LOG-194820-US
           </button>
@@ -663,19 +643,19 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
       {/* Loading Skeleton */}
       {loading && (
         <div className="flex flex-col items-center justify-center py-16 space-y-3">
-          <Loader2 className="text-dhl-red animate-spin" size={32} />
+          <Loader2 className="text-amber-400 animate-spin" size={32} />
           <p className="text-xs font-mono text-slate-400">Decrypting satellite transit logs...</p>
         </div>
       )}
 
       {/* Error Output */}
       {error && !loading && (
-        <div className="bg-rose-50 border-l-4 border-rose-500 dark:bg-rose-950/20 rounded-xl p-5 text-left max-w-xl mx-auto space-y-1 shadow-sm">
-          <div className="text-rose-700 dark:text-rose-400 font-bold text-xs uppercase tracking-wider font-mono flex items-center gap-1.5">
+        <div className="bg-rose-950/40 border-l-4 border-rose-500 rounded-xl p-5 text-left max-w-xl mx-auto space-y-1 shadow-sm">
+          <div className="text-rose-400 font-bold text-xs uppercase tracking-wider font-mono flex items-center gap-1.5">
             <AlertTriangle size={14} />
             Tracking Reference Exception
           </div>
-          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-medium">{error}</p>
+          <p className="text-xs text-slate-300 leading-relaxed font-medium">{error}</p>
         </div>
       )}
 
@@ -697,23 +677,23 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
           {/* Main info & Live Map (2/3 col) */}
           <div className="lg:col-span-2 space-y-6">
             {/* Live Telemetry Actions Bar */}
-            <div className="flex items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-3 bg-[#181a22] border border-[#2b303e] rounded-2xl p-4 shadow-sm">
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Live Connection Active</span>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-300">Live Connection Active</span>
               </div>
               <div className="flex items-center gap-2">
                 {/* Refresh Button */}
                 <button
                   onClick={handleRefresh}
                   disabled={refreshing}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-150/80 dark:bg-slate-800/50 dark:hover:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 transition-all disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#20232e] hover:bg-[#282d3b] border border-[#2b303e] rounded-xl text-xs font-semibold text-slate-200 transition-all disabled:opacity-50 cursor-pointer"
                   title="Simulate fetching the latest tracking data from the server"
                 >
-                  <Activity size={13} className={`text-blue-500 ${refreshing ? 'animate-spin' : ''}`} />
+                  <Activity size={13} className={`text-amber-400 ${refreshing ? 'animate-spin' : ''}`} />
                   {refreshing ? 'Refreshing...' : 'Refresh'}
                 </button>
                 
@@ -721,7 +701,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                 {settings?.trackerShowShareButton !== false && (
                   <button
                     onClick={() => setShowShareModal(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-blue-500/15 cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black transition-all shadow-md cursor-pointer"
                   >
                     <Share2 size={13} />
                     Share Shipment
@@ -730,15 +710,15 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
               </div>
             </div>
 
-            {/* PROMINENT SHIPMENT OVERVIEW CARD - FEDEX HIGH DENSITY CORP LAYOUT */}
-            <div className={`bg-white dark:bg-slate-900 border-t-8 ${presetStyle.cardBorder} rounded-2xl p-6 sm:p-8 shadow-md space-y-6`}>
+            {/* PROMINENT SHIPMENT OVERVIEW CARD - DARK ASH LAYOUT */}
+            <div className={`bg-[#181a22] border-t-8 ${presetStyle.cardBorder} border-x border-b border-[#2b303e] rounded-2xl p-6 sm:p-8 shadow-xl space-y-6 text-slate-100`}>
               
               {/* Main tracking banner */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-[#2b303e]">
                 <div className="space-y-1.5">
                   <span className={`text-[10px] ${presetStyle.accentText} uppercase font-black tracking-widest font-mono block`}>Logify Express Waybill ID</span>
                   <div className="flex items-center gap-3 flex-wrap">
-                    <h3 className="text-3xl font-sans font-black text-slate-900 dark:text-white tracking-tight">
+                    <h3 className="text-3xl font-sans font-black text-white tracking-tight">
                       {shipment.id}
                     </h3>
                     <span className={`text-[10px] font-bold font-mono uppercase px-2 py-0.5 rounded border ${presetStyle.accentBg}`}>
@@ -770,26 +750,26 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
               </div>
 
               {/* ACTION-ORIENTED STATUS WITH HIGH DENSITY INFO */}
-              <div className="bg-slate-50 dark:bg-slate-850 border border-slate-100 dark:border-slate-800 rounded-xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div className="bg-[#20232e] border border-[#2c3242] rounded-xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="flex items-center gap-4">
                   <div className={`p-3.5 rounded-full ${
                     shipment.status === 'Delivered'
                       ? 'bg-emerald-500 text-white'
                       : shipment.status === 'Cancelled'
                       ? 'bg-rose-500 text-white'
-                      : 'bg-dhl-red text-white animate-pulse'
+                      : 'bg-amber-500 text-slate-950 font-black animate-pulse'
                   }`}>
                     {shipment.status === 'Delivered' ? <CheckCircle2 size={24} /> : <Truck size={24} />}
                   </div>
                   <div>
                     <span className="text-[9px] uppercase font-bold font-mono tracking-wider text-slate-400 block">Current Status</span>
-                    <h2 className="text-2xl font-sans font-black text-slate-900 dark:text-white tracking-tight uppercase">
+                    <h2 className="text-2xl font-sans font-black text-white tracking-tight uppercase">
                       {shipment.status === 'Delivered' ? 'Delivered' : 
                        shipment.status === 'Out for Delivery' ? 'Out for Delivery' :
                        shipment.status === 'In Transit' ? 'In Transit / On its way' : 
                        shipment.status === 'Picked Up' ? 'Picked Up / Traveling' : 'Shipment Created'}
                     </h2>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <p className="text-xs text-slate-400">
                       Last scanned coordinate update received: {new Date().toLocaleTimeString()}
                     </p>
                   </div>
@@ -800,7 +780,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                   </span>
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Live SLA Active</span>
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400">Live SLA Active</span>
                 </div>
               </div>
 
@@ -810,9 +790,9 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                 <div className="relative flex flex-col md:flex-row justify-between items-center md:items-start gap-8 md:gap-0">
                   
                   {/* Connecting bar */}
-                  <div className="absolute top-5 left-[10%] right-[10%] h-[3px] bg-slate-100 dark:bg-slate-800 hidden md:block" />
+                  <div className="absolute top-5 left-[10%] right-[10%] h-[3px] bg-[#292e3d] hidden md:block" />
                   <div 
-                    className="absolute top-5 left-[10%] h-[3px] bg-gradient-to-r from-dhl-red to-dhl-yellow transition-all duration-[1200ms] ease-out hidden md:block"
+                    className="absolute top-5 left-[10%] h-[3px] bg-gradient-to-r from-amber-500 to-amber-300 transition-all duration-[1200ms] ease-out hidden md:block"
                     style={{
                       width: 
                         shipment.status === 'Delivered' ? '80%' :
@@ -824,11 +804,11 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
 
                   {/* Step 1: Created */}
                   <div className="flex flex-row md:flex-col items-center gap-3 md:gap-2 relative z-10 w-full md:w-1/5 text-left md:text-center">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center border-2 border-dhl-red bg-white dark:bg-slate-900 text-dhl-red font-mono font-bold text-xs shadow-sm">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center border-2 border-amber-500 bg-amber-500 text-slate-950 font-mono font-bold text-xs shadow-sm">
                       ✓
                     </div>
                     <div>
-                      <h4 className="text-[11px] font-bold text-slate-800 dark:text-slate-200">Pending</h4>
+                      <h4 className="text-[11px] font-bold text-slate-100">Pending</h4>
                       <p className="text-[9px] font-mono text-slate-400">Order Placed</p>
                     </div>
                   </div>
@@ -837,13 +817,13 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                   <div className="flex flex-row md:flex-col items-center gap-3 md:gap-2 relative z-10 w-full md:w-1/5 text-left md:text-center">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 font-mono font-bold text-xs shadow-sm transition-colors duration-500 ${
                       ['Picked Up', 'In Transit', 'Out for Delivery', 'Delivered'].includes(shipment.status)
-                        ? 'border-dhl-red bg-dhl-red text-white'
-                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-400'
+                        ? 'border-amber-500 bg-amber-500 text-slate-950'
+                        : 'border-[#2e3444] bg-[#20232e] text-slate-400'
                     }`}>
                       {['Picked Up', 'In Transit', 'Out for Delivery', 'Delivered'].includes(shipment.status) ? '✓' : '02'}
                     </div>
                     <div>
-                      <h4 className={`text-[11px] font-bold ${['Picked Up', 'In Transit', 'Out for Delivery', 'Delivered'].includes(shipment.status) ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400'}`}>Picked Up</h4>
+                      <h4 className={`text-[11px] font-bold ${['Picked Up', 'In Transit', 'Out for Delivery', 'Delivered'].includes(shipment.status) ? 'text-slate-100' : 'text-slate-400'}`}>Picked Up</h4>
                       <p className="text-[9px] font-mono text-slate-400">Manifest Verified</p>
                     </div>
                   </div>
@@ -852,13 +832,13 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                   <div className="flex flex-row md:flex-col items-center gap-3 md:gap-2 relative z-10 w-full md:w-1/5 text-left md:text-center">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 font-mono font-bold text-xs shadow-sm transition-colors duration-500 ${
                       ['In Transit', 'Out for Delivery', 'Delivered'].includes(shipment.status)
-                        ? 'border-dhl-red bg-dhl-red text-white'
-                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-400'
+                        ? 'border-amber-500 bg-amber-500 text-slate-950'
+                        : 'border-[#2e3444] bg-[#20232e] text-slate-400'
                     }`}>
                       {['In Transit', 'Out for Delivery', 'Delivered'].includes(shipment.status) ? '✓' : '03'}
                     </div>
                     <div>
-                      <h4 className={`text-[11px] font-bold ${['In Transit', 'Out for Delivery', 'Delivered'].includes(shipment.status) ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400'}`}>In Transit</h4>
+                      <h4 className={`text-[11px] font-bold ${['In Transit', 'Out for Delivery', 'Delivered'].includes(shipment.status) ? 'text-slate-100' : 'text-slate-400'}`}>In Transit</h4>
                       <p className="text-[9px] font-mono text-slate-400">En Route Corridor</p>
                     </div>
                   </div>
@@ -867,13 +847,13 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                   <div className="flex flex-row md:flex-col items-center gap-3 md:gap-2 relative z-10 w-full md:w-1/5 text-left md:text-center">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 font-mono font-bold text-xs shadow-sm transition-colors duration-500 ${
                       ['Out for Delivery', 'Delivered'].includes(shipment.status)
-                        ? 'border-dhl-red bg-dhl-red text-white animate-pulse'
-                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-400'
+                        ? 'border-amber-500 bg-amber-500 text-slate-950 animate-pulse'
+                        : 'border-[#2e3444] bg-[#20232e] text-slate-400'
                     }`}>
                       {['Out for Delivery', 'Delivered'].includes(shipment.status) ? '✓' : '04'}
                     </div>
                     <div>
-                      <h4 className={`text-[11px] font-bold ${['Out for Delivery', 'Delivered'].includes(shipment.status) ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400'}`}>Out for Delivery</h4>
+                      <h4 className={`text-[11px] font-bold ${['Out for Delivery', 'Delivered'].includes(shipment.status) ? 'text-slate-100' : 'text-slate-400'}`}>Out for Delivery</h4>
                       <p className="text-[9px] font-mono text-slate-400">Local Dispatch Courier</p>
                     </div>
                   </div>
@@ -883,12 +863,12 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 font-mono font-bold text-xs shadow-sm transition-colors duration-500 ${
                       shipment.status === 'Delivered'
                         ? 'border-emerald-500 bg-emerald-500 text-white'
-                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-400'
+                        : 'border-[#2e3444] bg-[#20232e] text-slate-400'
                     }`}>
                       {shipment.status === 'Delivered' ? '✓' : '05'}
                     </div>
                     <div>
-                      <h4 className={`text-[11px] font-bold ${shipment.status === 'Delivered' ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : 'text-slate-400'}`}>Delivered</h4>
+                      <h4 className={`text-[11px] font-bold ${shipment.status === 'Delivered' ? 'text-emerald-400 font-extrabold' : 'text-slate-400'}`}>Delivered</h4>
                       <p className="text-[9px] font-mono text-slate-400">Signature Captured</p>
                     </div>
                   </div>
@@ -901,7 +881,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
             {/* Delivery Estimation Progress Bar & Route Vector Panel */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Delivery Estimation Progress Bar */}
-              <div className={`${settings?.trackerShowRouteVector !== false ? 'md:col-span-2' : 'md:col-span-3'} bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-3 flex flex-col justify-between`}>
+              <div className={`${settings?.trackerShowRouteVector !== false ? 'md:col-span-2' : 'md:col-span-3'} bg-[#181a22] border border-[#2b303e] rounded-2xl p-5 shadow-sm space-y-3 flex flex-col justify-between`}>
                 <div className="flex justify-between items-center text-xs">
                   <span className="font-mono text-slate-400 uppercase font-bold tracking-wider">Delivery Transit Progress</span>
                   <span className={`font-mono font-bold ${presetStyle.accentText}`}>
@@ -912,9 +892,9 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                      shipment.status === 'Pending' ? '10% (Pending)' : '0%'}
                   </span>
                 </div>
-                <div className="relative h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden my-1">
+                <div className="relative h-2 w-full bg-[#20232e] rounded-full overflow-hidden my-1">
                   <div 
-                    className={`h-full bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full transition-all duration-[1500ms] ease-out ${
+                    className={`h-full bg-gradient-to-r from-amber-500 to-amber-300 rounded-full transition-all duration-[1500ms] ease-out ${
                       shipment.status === 'In Transit' ? 'animate-pulse' : ''
                     }`}
                     style={{
@@ -927,13 +907,13 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                   <span className={shipment.status === 'Picked Up' ? `${presetStyle.accentText} font-bold` : ''}>Picked Up</span>
                   <span className={shipment.status === 'In Transit' ? `${presetStyle.accentText} font-bold animate-pulse` : ''}>In Transit</span>
                   <span className={shipment.status === 'Out for Delivery' ? `${presetStyle.accentText} font-bold` : ''}>Out for Delivery</span>
-                  <span className={shipment.status === 'Delivered' ? 'text-emerald-500 dark:text-emerald-400 font-bold' : ''}>Delivered</span>
+                  <span className={shipment.status === 'Delivered' ? 'text-emerald-400 font-bold' : ''}>Delivered</span>
                 </div>
               </div>
 
               {/* Route Vector Panel */}
               {settings?.trackerShowRouteVector !== false && (
-                <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between space-y-2.5">
+                <div className="bg-[#181a22] border border-[#2b303e] rounded-2xl p-4 shadow-sm flex flex-col justify-between space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="font-mono text-slate-400 uppercase font-bold tracking-wider text-[10px] flex items-center gap-1">
                       <Map size={12} className={presetStyle.accentText} />
@@ -945,7 +925,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                   </div>
 
                   {/* Styled route vector diagram with map overlay styling */}
-                  <div className="relative bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800 rounded-xl p-3 h-24 overflow-hidden flex flex-col justify-between">
+                  <div className="relative bg-[#12141a] border border-[#282d3b] rounded-xl p-3 h-24 overflow-hidden flex flex-col justify-between">
                     {/* Subtle map pattern lines background */}
                     <div className="absolute inset-0 opacity-15 pointer-events-none">
                       <svg width="100%" height="100%">
@@ -959,7 +939,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                     </div>
 
                     {/* Route connecting line */}
-                    <div className="absolute inset-x-8 top-1/2 -translate-y-1/2 h-[1.5px] border-t border-dashed border-slate-300 dark:border-slate-700 pointer-events-none flex justify-between items-center" />
+                    <div className="absolute inset-x-8 top-1/2 -translate-y-1/2 h-[1.5px] border-t border-dashed border-slate-700 pointer-events-none flex justify-between items-center" />
                     
                     {/* Progress indicator along path */}
                     <div 
@@ -968,7 +948,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                         left: `calc(12% + (${progressWidth === '0%' ? '0px' : progressWidth}) * 0.72)` 
                       }}
                     >
-                      <div className="bg-blue-600 text-white rounded-full p-1 shadow-lg shadow-blue-500/35 relative z-10 animate-bounce">
+                      <div className="bg-amber-500 text-slate-950 rounded-full p-1 shadow-lg relative z-10 animate-bounce">
                         <Truck size={10} />
                       </div>
                     </div>
@@ -989,41 +969,41 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
 
                     {/* Text Details inside visual box */}
                     <div className="mt-auto w-full flex justify-between items-center text-[8px] font-mono text-slate-400 relative z-20">
-                      <span className="truncate max-w-[80px] bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded" title={shipment.pickupAddress}>
+                      <span className="truncate max-w-[80px] bg-[#1a1d25] px-1 py-0.5 rounded text-slate-300" title={shipment.pickupAddress}>
                         {shipment.pickupAddress.split(',')[0]}
                       </span>
-                      <span className="truncate max-w-[80px] bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-right" title={shipment.deliveryAddress}>
+                      <span className="truncate max-w-[80px] bg-[#1a1d25] px-1 py-0.5 rounded text-right text-slate-300" title={shipment.deliveryAddress}>
                         {shipment.deliveryAddress.split(',')[0]}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-[9px] font-mono text-slate-500">
+                  <div className="flex items-center justify-between text-[9px] font-mono text-slate-400">
                     <span className="flex items-center gap-0.5">
-                      <Compass size={10} className="text-slate-400 animate-spin" style={{ animationDuration: '6s' }} />
+                      <Compass size={10} className="text-amber-400 animate-spin" style={{ animationDuration: '6s' }} />
                       GPS Connection
                     </span>
-                    <span className="text-slate-400 font-bold uppercase tracking-wider">Active Stream</span>
+                    <span className="text-amber-400 font-bold uppercase tracking-wider">Active Stream</span>
                   </div>
                 </div>
               )}
             </div>
 
             {/* TABBED CARGO TRAVEL HISTORY & SHIPMENT FACTS */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+            <div className="bg-[#181a22] border border-[#2b303e] rounded-2xl shadow-sm overflow-hidden">
               {/* Tab Header Selector */}
               {settings?.trackerShowChronologyLog !== false && (
-                <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 p-2 gap-2">
+                <div className="flex border-b border-[#2b303e] bg-[#12141a] p-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setActiveTab('history')}
                     className={`flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
                       activeTab === 'history'
-                        ? 'bg-white dark:bg-slate-800 text-dhl-red shadow-sm border border-slate-200/50 dark:border-slate-700'
-                        : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/50 dark:hover:bg-slate-800/40'
+                        ? 'bg-[#20232e] text-amber-400 shadow-sm border border-[#2c3242]'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-[#1a1d25]'
                     }`}
                   >
-                    <Activity size={14} className={activeTab === 'history' ? 'text-dhl-red' : ''} />
+                    <Activity size={14} className={activeTab === 'history' ? 'text-amber-400' : ''} />
                     Travel History
                   </button>
                   <button
@@ -1031,11 +1011,11 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                     onClick={() => setActiveTab('facts')}
                     className={`flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
                       activeTab === 'facts'
-                        ? 'bg-white dark:bg-slate-800 text-dhl-red shadow-sm border border-slate-200/50 dark:border-slate-700'
-                        : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/50 dark:hover:bg-slate-800/40'
+                        ? 'bg-[#20232e] text-amber-400 shadow-sm border border-[#2c3242]'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-[#1a1d25]'
                     }`}
                   >
-                    <FileText size={14} className={activeTab === 'facts' ? 'text-dhl-red' : ''} />
+                    <FileText size={14} className={activeTab === 'facts' ? 'text-amber-400' : ''} />
                     Shipment Facts
                   </button>
                 </div>
@@ -1046,9 +1026,9 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                 {activeTab === 'history' ? (
                   /* TRAVEL HISTORY TIMELINE TABLE */
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center justify-between pb-3 border-b border-[#2b303e]">
                       <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">Chronological Tracking Scan Log</span>
-                      <span className="text-[10px] font-mono font-bold text-dhl-red bg-dhl-red/10 dark:bg-red-950/20 px-2 py-0.5 rounded">
+                      <span className="text-[10px] font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
                         {shipment.timeline.length} Recorded Checkpoints
                       </span>
                     </div>
@@ -1062,31 +1042,31 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                               key={index} 
                               className={`flex items-start justify-between text-xs p-4 rounded-xl border transition-all ${
                                 isLatest 
-                                  ? 'bg-red-500/[0.03] border-dhl-red/30 dark:bg-red-950/10 dark:border-red-800/40 shadow-sm' 
-                                  : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800/40'
+                                  ? 'bg-[#20232e] border-amber-500/50 shadow-sm' 
+                                  : 'bg-[#181a22] border-[#2b303e]'
                               }`}
                             >
                               <div className="space-y-1.5 flex-1 min-w-0 pr-4">
                                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                                   <span className={`font-bold rounded px-1.5 py-0.5 text-[9px] uppercase font-mono tracking-wider ${
                                     event.status === 'Delivered' 
-                                      ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400' 
+                                      ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-500/30' 
                                       : event.status === 'In Transit'
-                                      ? 'bg-dhl-red/10 text-dhl-red dark:bg-red-900/20 dark:text-red-400'
+                                      ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
                                       : event.status === 'Out for Delivery'
-                                      ? 'bg-dhl-yellow/15 text-dhl-red dark:bg-yellow-950/20 dark:text-yellow-400'
-                                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                                      ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30'
+                                      : 'bg-[#20232e] text-slate-300'
                                   }`}>
                                     {event.status}
                                   </span>
                                   {event.location && (
-                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold flex items-center gap-0.5">
+                                    <span className="text-[10px] text-slate-400 font-bold flex items-center gap-0.5">
                                       <MapPin size={10} className="text-slate-400" />
                                       {event.location}
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">
+                                <p className="text-xs text-slate-200 font-medium">
                                   {event.description}
                                 </p>
                               </div>
@@ -1096,7 +1076,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                                   {formatDate(event.timestamp)}
                                 </span>
                                 {isLatest && (
-                                  <span className="text-[8px] uppercase tracking-wider font-black text-dhl-red animate-pulse">
+                                  <span className="text-[8px] uppercase tracking-wider font-black text-amber-400 animate-pulse">
                                     LATEST SCAN
                                   </span>
                                 )}
@@ -1112,64 +1092,64 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                 ) : (
                   /* SHIPMENT FACTS GRID */
                   <div className="space-y-4">
-                    <div className="pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <div className="pb-3 border-b border-[#2b303e]">
                       <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">Technical Cargo Manifest Facts</span>
                     </div>
  
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-xs">
                       <div className="space-y-3.5">
-                        <div className="flex justify-between pb-2 border-b border-slate-100 dark:border-slate-800/40">
+                        <div className="flex justify-between pb-2 border-b border-[#2b303e]">
                           <span className="text-slate-400 font-medium font-sans">Tracking Reference ID</span>
-                          <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{shipment.id}</span>
+                          <span className="font-mono font-bold text-slate-100">{shipment.id}</span>
                         </div>
-                        <div className="flex justify-between pb-2 border-b border-slate-100 dark:border-slate-800/40">
+                        <div className="flex justify-between pb-2 border-b border-[#2b303e]">
                           <span className="text-slate-400 font-medium font-sans">Service Provider</span>
-                          <span className="font-sans font-bold text-slate-800 dark:text-slate-200">Logify Express® Premium</span>
+                          <span className="font-sans font-bold text-slate-100">Logify Express® Premium</span>
                         </div>
-                        <div className="flex justify-between pb-2 border-b border-slate-100 dark:border-slate-800/40">
+                        <div className="flex justify-between pb-2 border-b border-[#2b303e]">
                           <span className="text-slate-400 font-medium font-sans">Product Level / Cargo Type</span>
-                          <span className="font-sans font-bold text-dhl-red uppercase">{shipment.type} Courier</span>
+                          <span className="font-sans font-bold text-amber-400 uppercase">{shipment.type} Courier</span>
                         </div>
-                        <div className="flex justify-between pb-2 border-b border-slate-100 dark:border-slate-800/40">
+                        <div className="flex justify-between pb-2 border-b border-[#2b303e]">
                           <span className="text-slate-400 font-medium font-sans">Total Piece Weight</span>
-                          <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
+                          <span className="font-mono font-bold text-slate-100">
                             {shipment.weight} kg / {(shipment.weight * 2.20462).toFixed(1)} lbs
                           </span>
                         </div>
-                        <div className="flex justify-between pb-2 border-b border-slate-100 dark:border-slate-800/40">
+                        <div className="flex justify-between pb-2 border-b border-[#2b303e]">
                           <span className="text-slate-400 font-medium font-sans">Total Shipments In Parcel</span>
-                          <span className="font-sans font-bold text-slate-800 dark:text-slate-200">1 Piece</span>
+                          <span className="font-sans font-bold text-slate-100">1 Piece</span>
                         </div>
                       </div>
 
                       <div className="space-y-3.5">
-                        <div className="flex justify-between pb-2 border-b border-slate-100 dark:border-slate-800/40">
+                        <div className="flex justify-between pb-2 border-b border-[#2b303e]">
                           <span className="text-slate-400 font-medium font-sans">Package Dimensions</span>
-                          <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
+                          <span className="font-mono font-bold text-slate-100">
                             {shipment.packageDimensions 
                               ? `${shipment.packageDimensions.length} x ${shipment.packageDimensions.width} x ${shipment.packageDimensions.height} cm`
                               : '40 x 30 x 15 cm (Medium Box)'}
                           </span>
                         </div>
-                        <div className="flex justify-between pb-2 border-b border-slate-100 dark:border-slate-800/40">
+                        <div className="flex justify-between pb-2 border-b border-[#2b303e]">
                           <span className="text-slate-400 font-medium font-sans">Special Handling Flags</span>
-                          <span className="font-sans font-bold text-dhl-red">
+                          <span className="font-sans font-bold text-amber-400">
                             {shipment.type === 'Fragile' ? 'Fragile - High Care' : 'Standard Priority Cargo'}
                           </span>
                         </div>
-                        <div className="flex justify-between pb-2 border-b border-slate-100 dark:border-slate-800/40">
+                        <div className="flex justify-between pb-2 border-b border-[#2b303e]">
                           <span className="text-slate-400 font-medium font-sans">Required Signature Option</span>
-                          <span className="font-sans font-bold text-slate-800 dark:text-slate-200">Direct Signature Required</span>
+                          <span className="font-sans font-bold text-slate-100">Direct Signature Required</span>
                         </div>
-                        <div className="flex justify-between pb-2 border-b border-slate-100 dark:border-slate-800/40">
+                        <div className="flex justify-between pb-2 border-b border-[#2b303e]">
                           <span className="text-slate-400 font-medium font-sans">Estimated Insurance Cover</span>
-                          <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
+                          <span className="font-mono font-bold text-slate-100">
                             {shipment.packageValue ? `$${shipment.packageValue.toFixed(2)}` : '$150.00 (Standard)'}
                           </span>
                         </div>
-                        <div className="flex justify-between pb-2 border-b border-slate-100 dark:border-slate-800/40">
+                        <div className="flex justify-between pb-2 border-b border-[#2b303e]">
                           <span className="text-slate-400 font-medium font-sans">Dispatch Terms</span>
-                          <span className="font-sans font-bold text-emerald-600 uppercase font-black tracking-wider">Paid / Prepaid</span>
+                          <span className="font-sans font-bold text-emerald-400 uppercase font-black tracking-wider">Paid / Prepaid</span>
                         </div>
                       </div>
                     </div>
@@ -1183,7 +1163,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
               <div className="space-y-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider font-mono flex items-center gap-1.5">
-                  <Map size={13} className="text-dhl-red animate-pulse" />
+                  <Map size={13} className="text-amber-400 animate-pulse" />
                   Live Fleet Interactive Telemetry
                 </h3>
 
@@ -1194,13 +1174,13 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                     onClick={() => {
                       setIsAutoPolling(!isAutoPolling);
                       if (!isAutoPolling) {
-                        setIsSimulating(false); // turn off simulation if we go live with DB
+                        setIsSimulating(false);
                       }
                     }}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-mono font-bold uppercase border transition-all cursor-pointer ${
                       isAutoPolling
                         ? 'bg-emerald-600 border-emerald-500 text-white'
-                        : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300'
+                        : 'bg-[#20232e] hover:bg-[#282d3b] border-[#2b303e] text-slate-300'
                     }`}
                     title="Toggle auto-refreshing tracking status live from the database"
                   >
@@ -1211,7 +1191,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                       </>
                     ) : (
                       <>
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-500" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
                         Live Polling: OFF
                       </>
                     )}
@@ -1226,13 +1206,13 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                           onClick={() => {
                             setIsSimulating(!isSimulating);
                             if (!isSimulating) {
-                              setIsAutoPolling(false); // turn off live polling if we simulate
+                              setIsAutoPolling(false);
                             }
                           }}
                           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-mono font-bold uppercase border transition-all cursor-pointer ${
                             isSimulating
-                              ? 'bg-dhl-yellow border-dhl-yellow/80 text-slate-950 shadow-md shadow-dhl-yellow/15 font-black'
-                              : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
+                              ? 'bg-amber-500 border-amber-400 text-slate-950 font-black'
+                              : 'bg-[#20232e] hover:bg-[#282d3b] border-[#2b303e] text-slate-300'
                           }`}
                           title="Toggle simulated driver movement transit demo along the waybill route"
                         >
@@ -1271,7 +1251,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                               `[${new Date().toLocaleTimeString()}] 🔄 GPS simulation progress reset to ${Math.round(initialProgress * 100)}%.`
                             ]);
                           }}
-                          className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white cursor-pointer transition-all"
+                          className="p-1.5 rounded-xl bg-[#20232e] hover:bg-[#282d3b] border border-[#2b303e] text-slate-300 hover:text-white cursor-pointer transition-all"
                           title="Reset GPS simulation to shipment's starting progress"
                         >
                           <RotateCcw size={11} />
@@ -1293,28 +1273,28 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                       currentCoords={simulatedCoords || shipment.currentCoords}
                       status={isSimulating ? `In Transit (Simulating)` : shipment.status}
                       driverName={shipment.assignedDriverId ? "Dedicated Courier" : "Logify Logistics Team"}
-                      theme={theme}
+                      theme="dark"
                     />
                   </div>
                 )}
 
                 {/* 2. Live Telemetry metrics & Dispatch terminal */}
                 {settings?.trackerShowTelemetryDeck !== false && (
-                  <div className={`bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between space-y-4 shadow-xl ${settings?.trackerShowMap !== false ? 'md:col-span-1' : 'md:col-span-3'}`}>
+                  <div className={`bg-[#12141a] border border-[#282d3b] rounded-2xl p-4 flex flex-col justify-between space-y-4 shadow-xl ${settings?.trackerShowMap !== false ? 'md:col-span-1' : 'md:col-span-3'}`}>
                   {/* Dashboard Header */}
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                    <div className="flex items-center justify-between border-b border-[#282d3b] pb-2.5">
                       <span className="text-[10px] font-mono font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                        <Compass size={12} className="text-blue-400 animate-spin" style={{ animationDuration: '10s' }} />
+                        <Compass size={12} className="text-amber-400 animate-spin" style={{ animationDuration: '10s' }} />
                         Fleet Telemetry Deck
                       </span>
-                      <span className="text-[9px] font-mono bg-blue-950/50 text-blue-400 border border-blue-900/40 px-1.5 py-0.5 rounded font-extrabold">
+                      <span className="text-[9px] font-mono bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded font-extrabold">
                         {isSimulating ? "SIMULATOR ONLINE" : isAutoPolling ? "DB SYNC ACTIVE" : "STABLE LINK"}
                       </span>
                     </div>
 
                     {/* Sub-tabs for telemetry view */}
-                    <div className="grid grid-cols-3 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-850">
+                    <div className="grid grid-cols-3 gap-1 bg-[#181a22] p-1 rounded-xl border border-[#282d3b]">
                       {(['hardware', 'sensors', 'weather'] as const).map((tab) => (
                         <button
                           key={tab}
@@ -1322,8 +1302,8 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                           onClick={() => setTelemetryTab(tab)}
                           className={`text-[9px] font-mono uppercase font-bold py-1 px-1 rounded-lg transition-all cursor-pointer text-center ${
                             telemetryTab === tab
-                              ? 'bg-slate-800 text-white shadow'
-                              : 'text-slate-500 hover:text-slate-300'
+                              ? 'bg-[#20232e] text-amber-400 font-bold'
+                              : 'text-slate-400 hover:text-slate-200'
                           }`}
                         >
                           {tab}
@@ -1345,8 +1325,8 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                           {/* Speed Gauge & Diagnostics row */}
                           <div className="grid grid-cols-2 gap-2.5">
                             {/* SVG Speedometer Gauge */}
-                            <div className="bg-slate-950/40 border border-slate-850/60 rounded-xl p-2.5 flex flex-col items-center justify-center relative overflow-hidden">
-                              <span className="text-[7.5px] font-mono uppercase text-slate-500 tracking-wider mb-1 block">Speed Velocity</span>
+                            <div className="bg-[#181a22] border border-[#282d3b] rounded-xl p-2.5 flex flex-col items-center justify-center relative overflow-hidden">
+                              <span className="text-[7.5px] font-mono uppercase text-slate-400 tracking-wider mb-1 block">Speed Velocity</span>
                               <div className="relative w-16 h-16 flex items-center justify-center">
                                 <svg className="w-full h-full transform -rotate-90">
                                   {/* Base Circle */}
@@ -1354,7 +1334,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                                     cx="32"
                                     cy="32"
                                     r="26"
-                                    className="stroke-slate-800 fill-none"
+                                    className="stroke-[#282d3b] fill-none"
                                     strokeWidth="4.5"
                                   />
                                   {/* Active Speed Arc */}
@@ -1362,7 +1342,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                                     cx="32"
                                     cy="32"
                                     r="26"
-                                    className="stroke-blue-500 fill-none transition-all duration-500 ease-out"
+                                    className="stroke-amber-400 fill-none transition-all duration-500 ease-out"
                                     strokeWidth="4.5"
                                     strokeDasharray="163"
                                     strokeDashoffset={163 - (163 * Math.min(simSpeed, 120)) / 120}
@@ -1371,15 +1351,15 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                                 </svg>
                                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                                   <span className="text-xs font-mono font-black text-slate-100">{simSpeed}</span>
-                                  <span className="text-[6.5px] font-mono uppercase text-slate-500 leading-none">mph</span>
+                                  <span className="text-[6.5px] font-mono uppercase text-slate-400 leading-none">mph</span>
                                 </div>
                               </div>
                             </div>
 
                             {/* Network Ping Sparks widget */}
-                            <div className="bg-slate-950/40 border border-slate-850/60 rounded-xl p-2.5 flex flex-col justify-between">
+                            <div className="bg-[#181a22] border border-[#282d3b] rounded-xl p-2.5 flex flex-col justify-between">
                               <div className="flex justify-between items-start">
-                                <span className="text-[7.5px] font-mono uppercase text-slate-500 tracking-wider block">Starlink Ping</span>
+                                <span className="text-[7.5px] font-mono uppercase text-slate-400 tracking-wider block">Starlink Ping</span>
                                 <span className="text-[8px] font-mono text-emerald-400 font-bold flex items-center gap-0.5">
                                   <Wifi size={9} />
                                   100%
@@ -1390,7 +1370,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                                   {networkPing}ms
                                 </span>
                                 {/* Animated SVG Sparkline */}
-                                <svg className="h-5 w-12 text-blue-400/80" viewBox="0 0 50 20">
+                                <svg className="h-5 w-12 text-amber-400/80" viewBox="0 0 50 20">
                                   <polyline
                                     fill="none"
                                     stroke="currentColor"
@@ -1399,7 +1379,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                                   />
                                 </svg>
                               </div>
-                              <span className="text-[7px] font-mono text-slate-600 leading-none block pt-1 border-t border-slate-850">
+                              <span className="text-[7px] font-mono text-slate-500 leading-none block pt-1 border-t border-[#282d3b]">
                                 SAT ID: SL-7389-X
                               </span>
                             </div>
@@ -1407,17 +1387,17 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
 
                           {/* Grid status details */}
                           <div className="grid grid-cols-2 gap-2">
-                            <div className="bg-slate-950/30 border border-slate-850/40 rounded-xl p-2">
-                              <span className="text-[7.5px] font-mono uppercase text-slate-500 tracking-wider block">GPS Constellation</span>
+                            <div className="bg-[#181a22] border border-[#282d3b] rounded-xl p-2">
+                              <span className="text-[7.5px] font-mono uppercase text-slate-400 tracking-wider block">GPS Constellation</span>
                               <span className="text-[10px] font-mono font-bold text-slate-300 flex items-center gap-1 pt-0.5">
                                 <Satellite size={10} className="text-emerald-400" />
                                 3D-Fix (11 Active)
                               </span>
                             </div>
-                            <div className="bg-slate-950/30 border border-slate-850/40 rounded-xl p-2">
-                              <span className="text-[7.5px] font-mono uppercase text-slate-500 tracking-wider block">Heading vector</span>
+                            <div className="bg-[#181a22] border border-[#282d3b] rounded-xl p-2">
+                              <span className="text-[7.5px] font-mono uppercase text-slate-400 tracking-wider block">Heading vector</span>
                               <span className="text-[10px] font-mono font-bold text-slate-300 flex items-center gap-1 pt-0.5">
-                                <Shield size={10} className="text-blue-400" />
+                                <Shield size={10} className="text-amber-400" />
                                 {simHeading}
                               </span>
                             </div>
@@ -1437,15 +1417,15 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                           {/* Cold Chain Monitor & Accel Grid */}
                           <div className="grid grid-cols-2 gap-2.5">
                             {/* Cold Chain Temp progress circle */}
-                            <div className="bg-slate-950/40 border border-slate-850/60 rounded-xl p-2.5 flex flex-col items-center justify-center">
-                              <span className="text-[7.5px] font-mono uppercase text-slate-500 tracking-wider mb-1 block">Cold Chain Temp</span>
+                            <div className="bg-[#181a22] border border-[#282d3b] rounded-xl p-2.5 flex flex-col items-center justify-center">
+                              <span className="text-[7.5px] font-mono uppercase text-slate-400 tracking-wider mb-1 block">Cold Chain Temp</span>
                               <div className="relative w-16 h-16 flex items-center justify-center">
                                 <svg className="w-full h-full transform -rotate-90">
                                   <circle
                                     cx="32"
                                     cy="32"
                                     r="26"
-                                    className="stroke-slate-800 fill-none"
+                                    className="stroke-[#282d3b] fill-none"
                                     strokeWidth="4.5"
                                   />
                                   <circle
@@ -1467,18 +1447,18 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                             </div>
 
                             {/* G-Force X-Y Coordinate Radar Target Grid */}
-                            <div className="bg-slate-950/40 border border-slate-850/60 rounded-xl p-2 flex flex-col items-center justify-between">
-                              <span className="text-[7.5px] font-mono uppercase text-slate-500 tracking-wider block">G-Force Vector</span>
+                            <div className="bg-[#181a22] border border-[#282d3b] rounded-xl p-2 flex flex-col items-center justify-between">
+                              <span className="text-[7.5px] font-mono uppercase text-slate-400 tracking-wider block">G-Force Vector</span>
                               
-                              <div className="relative w-12 h-12 border border-slate-800 rounded-full flex items-center justify-center mt-1">
+                              <div className="relative w-12 h-12 border border-[#282d3b] rounded-full flex items-center justify-center mt-1">
                                 {/* Crosshairs */}
-                                <div className="absolute inset-x-0 h-[0.5px] bg-slate-800"></div>
-                                <div className="absolute inset-y-0 w-[0.5px] bg-slate-800"></div>
-                                <div className="absolute w-6 h-6 border border-slate-800/60 rounded-full"></div>
+                                <div className="absolute inset-x-0 h-[0.5px] bg-[#282d3b]"></div>
+                                <div className="absolute inset-y-0 w-[0.5px] bg-[#282d3b]"></div>
+                                <div className="absolute w-6 h-6 border border-[#282d3b] rounded-full"></div>
                                 
-                                {/* Dynamic Neon Dot indicating current G-Forces */}
+                                {/* Dynamic Amber Dot indicating current G-Forces */}
                                 <div 
-                                  className="absolute w-2 h-2 rounded-full bg-cyan-400 shadow-md shadow-cyan-400/50 transition-all duration-300"
+                                  className="absolute w-2 h-2 rounded-full bg-amber-400 shadow-md shadow-amber-400/50 transition-all duration-300"
                                   style={{
                                     left: `calc(50% - 4px + ${gForceX * 25}px)`,
                                     top: `calc(50% - 4px - ${gForceY * 25}px)`
@@ -1495,15 +1475,15 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
 
                           {/* Sensors Details summary */}
                           <div className="grid grid-cols-2 gap-2">
-                            <div className="bg-slate-950/30 border border-slate-850/40 rounded-xl p-2">
-                              <span className="text-[7.5px] font-mono uppercase text-slate-500 tracking-wider block">Altitude SLA</span>
+                            <div className="bg-[#181a22] border border-[#282d3b] rounded-xl p-2">
+                              <span className="text-[7.5px] font-mono uppercase text-slate-400 tracking-wider block">Altitude SLA</span>
                               <span className="text-[10px] font-mono font-bold text-slate-300 flex items-center gap-1 pt-0.5">
-                                <Cpu size={10} className="text-cyan-400" />
+                                <Cpu size={10} className="text-amber-400" />
                                 {altitude} meters ASL
                               </span>
                             </div>
-                            <div className="bg-slate-950/30 border border-slate-850/40 rounded-xl p-2">
-                              <span className="text-[7.5px] font-mono uppercase text-slate-500 tracking-wider block">Diagnostics Link</span>
+                            <div className="bg-[#181a22] border border-[#282d3b] rounded-xl p-2">
+                              <span className="text-[7.5px] font-mono uppercase text-slate-400 tracking-wider block">Diagnostics Link</span>
                               <span className="text-[10px] font-mono font-bold text-emerald-400 flex items-center gap-1 pt-0.5">
                                 <ShieldCheck size={10} />
                                 OBD-II: NOMINAL
@@ -1522,10 +1502,10 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                           transition={{ duration: 0.15 }}
                           className="space-y-2"
                         >
-                          <div className="bg-slate-950/50 border border-slate-850 rounded-xl p-3 space-y-2">
-                            <div className="flex items-center justify-between border-b border-slate-850 pb-1.5">
+                          <div className="bg-[#181a22] border border-[#282d3b] rounded-xl p-3 space-y-2">
+                            <div className="flex items-center justify-between border-b border-[#282d3b] pb-1.5">
                               <span className="text-[8px] font-mono text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                                <Wind size={10} className="text-sky-400" />
+                                <Wind size={10} className="text-amber-400" />
                                 Location Meteorology
                               </span>
                               <span className="text-[8.5px] font-mono text-slate-200">
@@ -1535,27 +1515,27 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
 
                             <div className="grid grid-cols-2 gap-2 pt-0.5">
                               <div className="space-y-0.5">
-                                <span className="text-[7.5px] font-mono uppercase text-slate-500 block">Ambient Air Temp</span>
+                                <span className="text-[7.5px] font-mono uppercase text-slate-400 block">Ambient Air Temp</span>
                                 <span className="text-xs font-mono font-bold text-slate-200 block flex items-center gap-1">
                                   <Thermometer size={11} className="text-rose-400" />
                                   {(cargoTemp * 4 + 4.5).toFixed(1)}°C / 62.4°F
                                 </span>
                               </div>
                               <div className="space-y-0.5">
-                                <span className="text-[7.5px] font-mono uppercase text-slate-500 block">Wind Vector</span>
+                                <span className="text-[7.5px] font-mono uppercase text-slate-400 block">Wind Vector</span>
                                 <span className="text-xs font-mono font-bold text-slate-200 block flex items-center gap-1">
-                                  <Wind size={11} className="text-sky-400" />
+                                  <Wind size={11} className="text-amber-400" />
                                   NNE 14 km/h
                                 </span>
                               </div>
                               <div className="space-y-0.5">
-                                <span className="text-[7.5px] font-mono uppercase text-slate-500 block">Relative Humidity</span>
+                                <span className="text-[7.5px] font-mono uppercase text-slate-400 block">Relative Humidity</span>
                                 <span className="text-xs font-mono font-bold text-slate-200 block">
                                   58% (Relative)
                                 </span>
                               </div>
                               <div className="space-y-0.5">
-                                <span className="text-[7.5px] font-mono uppercase text-slate-500 block">Visibility Margin</span>
+                                <span className="text-[7.5px] font-mono uppercase text-slate-400 block">Visibility Margin</span>
                                 <span className="text-xs font-mono font-bold text-emerald-400 block">
                                   10.0 mi (Clear)
                                 </span>
@@ -1567,18 +1547,18 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                     </AnimatePresence>
 
                     {/* Telemetry Progress Bar inside Panel */}
-                    <div className="space-y-1 pt-1.5 border-t border-slate-850/60">
+                    <div className="space-y-1 pt-1.5 border-t border-[#282d3b]">
                       <div className="flex justify-between items-center text-[9px] font-mono text-slate-400">
                         <span>Route Journey Completion</span>
-                        <span className="font-bold text-blue-400">{Math.round(simProgress * 100)}%</span>
+                        <span className="font-bold text-amber-400">{Math.round(simProgress * 100)}%</span>
                       </div>
-                      <div className="h-1.5 w-full bg-slate-950 border border-slate-850 rounded-full overflow-hidden">
+                      <div className="h-1.5 w-full bg-[#181a22] border border-[#282d3b] rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all duration-300 ease-out"
+                          className="h-full bg-gradient-to-r from-amber-500 to-amber-300 rounded-full transition-all duration-300 ease-out"
                           style={{ width: `${simProgress * 100}%` }}
                         />
                       </div>
-                      <div className="flex justify-between text-[7px] font-mono text-slate-500 pt-0.5">
+                      <div className="flex justify-between text-[7px] font-mono text-slate-400 pt-0.5">
                         <span>PICKUP: {simProgress > 0.05 ? "DEPARTED" : "INIT"}</span>
                         <span>DIST: {simDistance ? `${simDistance.toFixed(1)} km` : "N/A"} REMAINING</span>
                       </div>
@@ -1586,19 +1566,19 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                   </div>
 
                   {/* Live Dispatch terminal output */}
-                  <div className="space-y-1.5 flex-1 flex flex-col min-h-[140px] justify-end pt-2 border-t border-slate-850/50">
+                  <div className="space-y-1.5 flex-1 flex flex-col min-h-[140px] justify-end pt-2 border-t border-[#282d3b]">
                     <div className="flex items-center justify-between">
                       <span className="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                         <Terminal size={10} className="text-emerald-400" />
                         Logify receiver stream
                       </span>
                       {/* Terminal mode toggle switches */}
-                      <div className="flex bg-slate-950 border border-slate-800 rounded-lg p-0.5">
+                      <div className="flex bg-[#181a22] border border-[#282d3b] rounded-lg p-0.5">
                         <button
                           type="button"
                           onClick={() => setTerminalMode('human')}
                           className={`text-[7.5px] font-mono uppercase px-1 py-0.5 rounded transition-all cursor-pointer ${
-                            terminalMode === 'human' ? 'bg-slate-800 text-white font-bold' : 'text-slate-500 hover:text-slate-300'
+                            terminalMode === 'human' ? 'bg-[#282d3b] text-white font-bold' : 'text-slate-400 hover:text-slate-200'
                           }`}
                         >
                           Human
@@ -1607,7 +1587,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                           type="button"
                           onClick={() => setTerminalMode('nmea')}
                           className={`text-[7.5px] font-mono uppercase px-1 py-0.5 rounded transition-all cursor-pointer ${
-                            terminalMode === 'nmea' ? 'bg-slate-800 text-white font-bold' : 'text-slate-500 hover:text-slate-300'
+                            terminalMode === 'nmea' ? 'bg-[#282d3b] text-white font-bold' : 'text-slate-400 hover:text-slate-200'
                           }`}
                         >
                           NMEA
@@ -1615,7 +1595,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                       </div>
                     </div>
 
-                    <div className="bg-slate-950 border border-slate-850 p-2.5 rounded-xl text-[9px] font-mono text-emerald-400/90 h-32 overflow-y-auto space-y-1 custom-scrollbar scroll-smooth">
+                    <div className="bg-[#12141a] border border-[#282d3b] p-2.5 rounded-xl text-[9px] font-mono text-emerald-400/90 h-32 overflow-y-auto space-y-1 custom-scrollbar scroll-smooth">
                       {terminalMode === 'human' ? (
                         simLogs.slice(-7).map((log, index) => (
                           <div key={index} className="leading-snug break-all">{log}</div>
@@ -1635,16 +1615,16 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
 
             {/* Address cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="border border-slate-100 dark:border-slate-800 rounded-2xl p-4 space-y-1 bg-white dark:bg-slate-900 shadow-sm">
-                <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-wide">Pickup Point</span>
-                <p className="text-xs font-bold text-slate-800 dark:text-slate-100">{shipment.senderName}</p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">{shipment.pickupAddress}</p>
+              <div className="border border-[#2b303e] rounded-2xl p-4 space-y-1 bg-[#181a22] shadow-sm">
+                <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wide">Pickup Point</span>
+                <p className="text-xs font-bold text-slate-100">{shipment.senderName}</p>
+                <p className="text-[11px] text-slate-400">{shipment.pickupAddress}</p>
               </div>
 
-              <div className="border border-slate-100 dark:border-slate-800 rounded-2xl p-4 space-y-1 bg-white dark:bg-slate-900 shadow-sm">
-                <span className="text-[9px] font-bold text-rose-500 uppercase tracking-wide">Delivery Destination</span>
-                <p className="text-xs font-bold text-slate-800 dark:text-slate-100">{shipment.receiverName}</p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">{shipment.deliveryAddress}</p>
+              <div className="border border-[#2b303e] rounded-2xl p-4 space-y-1 bg-[#181a22] shadow-sm">
+                <span className="text-[9px] font-bold text-rose-400 uppercase tracking-wide">Delivery Destination</span>
+                <p className="text-xs font-bold text-slate-100">{shipment.receiverName}</p>
+                <p className="text-[11px] text-slate-400">{shipment.deliveryAddress}</p>
               </div>
             </div>
           </div>
@@ -1658,10 +1638,10 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                 <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider font-mono">Thermal Shipping Tag Mockup</h3>
                 <div className="bg-[#FAF9F6] border-2 border-dashed border-slate-300 rounded-2xl p-5 text-slate-900 shadow-sm relative overflow-hidden font-mono text-[10px]">
                   {/* Visual Label punch-hole */}
-                  <div className="absolute top-4 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-slate-100 dark:bg-slate-950 border border-slate-300 pointer-events-none" />
+                  <div className="absolute top-4 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-[#121418] border border-slate-300 pointer-events-none" />
                   
                   <div className="pt-4 border-b border-slate-400 pb-2 flex justify-between items-end">
-                    <span className="font-sans font-black text-dhl-red text-sm tracking-tighter">LOGIFY EXPRESS®</span>
+                    <span className="font-sans font-black text-amber-600 text-sm tracking-tighter">LOGIFY EXPRESS®</span>
                     <span className="text-[8px] text-right">PREPAID AIRBILL</span>
                   </div>
 
@@ -1687,7 +1667,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                     </div>
                     <div className="border-r border-slate-300">
                       <span className="text-[7px] text-slate-500 block">SERVICE TYPE</span>
-                      <span className="font-bold text-xs uppercase text-dhl-red truncate block px-0.5">{shipment.type}</span>
+                      <span className="font-bold text-xs uppercase text-amber-600 truncate block px-0.5">{shipment.type}</span>
                     </div>
                     <div>
                       <span className="text-[7px] text-slate-500 block">DELIVERY ZONE</span>
@@ -1734,24 +1714,24 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
             {settings?.trackerShowSmsAlerts !== false && (
               <div className="space-y-3">
                 <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider font-mono">Real-Time Alerts Dispatch</h3>
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                <div className="bg-[#181a22] border border-[#2b303e] rounded-2xl p-5 shadow-sm space-y-4">
                   <div className="flex items-start gap-3">
-                    <div className="p-2.5 bg-dhl-yellow/15 text-dhl-red rounded-xl">
+                    <div className="p-2.5 bg-amber-500/10 text-amber-400 rounded-xl">
                       <Bell size={18} className="animate-swing" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-black text-slate-800 dark:text-white font-sans">SLA SMS Notifications</h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed pt-0.5">
+                      <h4 className="text-sm font-black text-white font-sans">SLA SMS Notifications</h4>
+                      <p className="text-xs text-slate-400 leading-relaxed pt-0.5">
                         Get instantaneous updates on transit exceptions, route diversions, or ETA delays sent to your mobile.
                       </p>
                     </div>
                   </div>
 
                   {smsSubscribed ? (
-                    <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 rounded-xl p-3 text-center space-y-1">
-                      <span className="text-emerald-700 dark:text-emerald-400 font-bold text-xs block">✓ Alerts Activated</span>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                        Real-time SMS stream registered for <span className="font-bold text-slate-800 dark:text-slate-200">{smsNumber}</span>
+                    <div className="bg-emerald-950/20 border border-emerald-900/40 rounded-xl p-3 text-center space-y-1">
+                      <span className="text-emerald-400 font-bold text-xs block">✓ Alerts Activated</span>
+                      <p className="text-[10px] text-slate-400">
+                        Real-time SMS stream registered for <span className="font-bold text-slate-200">{smsNumber}</span>
                       </p>
                     </div>
                   ) : (
@@ -1763,12 +1743,12 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                           placeholder="+1 (555) 019-2834"
                           value={smsNumber}
                           onChange={(e) => setSmsNumber(e.target.value)}
-                          className="flex-1 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2 text-xs outline-none focus:border-dhl-red dark:focus:border-red-500 transition-all text-slate-800 dark:text-slate-100 font-mono"
+                          className="flex-1 bg-[#12141a] border border-[#282d3b] rounded-xl px-3 py-2 text-xs outline-none focus:border-amber-500 transition-all text-slate-100 font-mono placeholder-slate-500"
                         />
                         <button
                           type="submit"
                           disabled={smsLoading}
-                          className="bg-dhl-red hover:bg-dhl-red-hover text-white font-black text-xs px-3 py-2 rounded-xl transition-all flex items-center gap-1 shrink-0 disabled:opacity-50 cursor-pointer"
+                          className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs px-3 py-2 rounded-xl transition-all flex items-center gap-1 shrink-0 disabled:opacity-50 cursor-pointer"
                         >
                           {smsLoading ? (
                             <Loader2 size={12} className="animate-spin" />
@@ -1788,17 +1768,17 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
             {settings?.trackerShowEmailAlerts !== false && (
               <div className="space-y-3">
                 <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider font-mono">Automated Email Registry</h3>
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                <div className="bg-[#181a22] border border-[#2b303e] rounded-2xl p-5 shadow-sm space-y-4">
                   
                   {/* Header and Toggle Switch Row */}
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-start gap-3">
-                      <div className="p-2.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl">
+                      <div className="p-2.5 bg-amber-500/10 text-amber-400 rounded-xl">
                         <Mail size={18} />
                       </div>
                       <div>
-                        <h4 className="text-sm font-black text-slate-800 dark:text-white font-sans">Subscribe to Updates</h4>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-normal pt-0.5">
+                        <h4 className="text-sm font-black text-white font-sans">Subscribe to Updates</h4>
+                        <p className="text-[11px] text-slate-400 leading-normal pt-0.5">
                           Register for automated email notifications on status changes.
                         </p>
                       </div>
@@ -1809,12 +1789,12 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                       type="button"
                       onClick={() => setIsEmailToggled(!isEmailToggled)}
                       className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        isEmailToggled ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'
+                        isEmailToggled ? 'bg-amber-500' : 'bg-[#282d3b]'
                       }`}
                       aria-pressed={isEmailToggled}
                     >
                       <span
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-slate-950 shadow ring-0 transition duration-200 ease-in-out ${
                           isEmailToggled ? 'translate-x-5' : 'translate-x-0'
                         }`}
                       />
@@ -1831,15 +1811,15 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                         transition={{ duration: 0.25, ease: 'easeInOut' }}
                         className="overflow-hidden"
                       >
-                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                        <div className="pt-2 border-t border-[#2b303e] space-y-3">
                           {isEmailSubscribed ? (
-                            <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 rounded-xl p-3 text-center space-y-1">
-                              <span className="text-emerald-700 dark:text-emerald-400 font-bold text-xs block">✓ Subscribed to Updates</span>
-                              <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                                Registered: <span className="font-bold text-slate-800 dark:text-slate-200">{emailValue}</span>
+                            <div className="bg-emerald-950/20 border border-emerald-900/40 rounded-xl p-3 text-center space-y-1">
+                              <span className="text-emerald-400 font-bold text-xs block">✓ Subscribed to Updates</span>
+                              <p className="text-[10px] text-slate-400">
+                                Registered: <span className="font-bold text-slate-200">{emailValue}</span>
                               </p>
                               {emailMessage && (
-                                <p className="text-[9px] text-emerald-600 dark:text-emerald-400 italic pt-1">{emailMessage}</p>
+                                <p className="text-[9px] text-emerald-400 italic pt-1">{emailMessage}</p>
                               )}
                             </div>
                           ) : (
@@ -1851,12 +1831,12 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                                   placeholder="your.email@example.com"
                                   value={emailValue}
                                   onChange={(e) => setEmailValue(e.target.value)}
-                                  className="flex-1 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2 text-xs outline-none focus:border-blue-500 transition-all text-slate-800 dark:text-slate-100 font-sans"
+                                  className="flex-1 bg-[#12141a] border border-[#282d3b] rounded-xl px-3 py-2 text-xs outline-none focus:border-amber-500 transition-all text-slate-100 font-sans placeholder-slate-500"
                                 />
                                 <button
                                   type="submit"
                                   disabled={emailLoading}
-                                  className="bg-blue-600 hover:bg-blue-700 text-white font-black text-xs px-3 py-2 rounded-xl transition-all flex items-center gap-1 shrink-0 disabled:opacity-50 cursor-pointer"
+                                  className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs px-3 py-2 rounded-xl transition-all flex items-center gap-1 shrink-0 disabled:opacity-50 cursor-pointer"
                                 >
                                   {emailLoading ? (
                                     <Loader2 size={12} className="animate-spin" />
@@ -1868,9 +1848,9 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                               
                               {emailMessage && (
                                 <div className={`p-2 rounded-lg text-[10px] font-medium ${
-                                  emailStatusType === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400' :
-                                  emailStatusType === 'info' ? 'bg-blue-50 text-blue-700 border border-blue-100 dark:bg-blue-950/20 dark:text-blue-400' :
-                                  'bg-rose-50 text-rose-700 border border-rose-100 dark:bg-rose-950/20 dark:text-rose-400'
+                                  emailStatusType === 'success' ? 'bg-emerald-950/20 text-emerald-400 border border-emerald-900/40' :
+                                  emailStatusType === 'info' ? 'bg-amber-950/20 text-amber-400 border border-amber-900/40' :
+                                  'bg-rose-950/20 text-rose-400 border border-rose-900/40'
                                 }`}>
                                   {emailMessage}
                                 </div>
@@ -1897,25 +1877,25 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
       {/* Share Modal */}
       {showShareModal && shipment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="bg-[#181a22] border border-[#2b303e] w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-[#2b303e]">
               <div className="flex items-center gap-2">
-                <Share2 size={16} className="text-blue-500" />
-                <h3 className="text-sm font-bold text-slate-800 dark:text-white font-sans uppercase tracking-wide">Share Tracking Portal</h3>
+                <Share2 size={16} className="text-amber-400" />
+                <h3 className="text-sm font-bold text-white font-sans uppercase tracking-wide">Share Tracking Portal</h3>
               </div>
               <button 
                 onClick={() => {
                   setShowShareModal(false);
                   setShareNotification(null);
                 }}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors text-lg font-mono font-bold px-1.5"
+                className="text-slate-400 hover:text-slate-200 transition-colors text-lg font-mono font-bold px-1.5"
               >
                 &times;
               </button>
             </div>
 
             <div className="space-y-4">
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              <p className="text-xs text-slate-400 leading-relaxed">
                 Provide external team members or customers with this unique secure waybill tracking portal link.
               </p>
 
@@ -1927,14 +1907,14 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                     type="text"
                     readOnly
                     value={getShareUrl()}
-                    className="flex-1 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2 text-xs font-mono text-slate-600 dark:text-slate-300 outline-none select-all"
+                    className="flex-1 bg-[#12141a] border border-[#282d3b] rounded-xl px-3 py-2 text-xs font-mono text-slate-300 outline-none select-all"
                   />
                   <button
                     onClick={handleCopyLink}
                     className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 ${
                       copied 
                         ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/10' 
-                        : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
+                        : 'bg-[#20232e] hover:bg-[#282d3b] text-slate-200'
                     }`}
                   >
                     {copied ? <Check size={13} /> : <Copy size={13} />}
@@ -1949,28 +1929,28 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => handleMockShare('Slack')}
-                    className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-xs text-slate-600 dark:text-slate-300 font-medium"
+                    className="flex items-center gap-2 p-2.5 rounded-xl border border-[#2b303e] bg-[#12141a] hover:bg-[#20232e] transition-all text-xs text-slate-300 font-medium"
                   >
                     <span className="w-2 h-2 rounded-full bg-indigo-500" />
                     Share to Slack
                   </button>
                   <button
                     onClick={() => handleMockShare('Teams')}
-                    className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-xs text-slate-600 dark:text-slate-300 font-medium"
+                    className="flex items-center gap-2 p-2.5 rounded-xl border border-[#2b303e] bg-[#12141a] hover:bg-[#20232e] transition-all text-xs text-slate-300 font-medium"
                   >
                     <span className="w-2 h-2 rounded-full bg-violet-500" />
                     Share to MS Teams
                   </button>
                   <button
                     onClick={() => handleMockShare('X / Twitter')}
-                    className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-xs text-slate-600 dark:text-slate-300 font-medium"
+                    className="flex items-center gap-2 p-2.5 rounded-xl border border-[#2b303e] bg-[#12141a] hover:bg-[#20232e] transition-all text-xs text-slate-300 font-medium"
                   >
                     <span className="w-2 h-2 rounded-full bg-sky-500" />
                     Share on X
                   </button>
                   <button
                     onClick={() => handleMockShare('Corporate Email')}
-                    className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-xs text-slate-600 dark:text-slate-300 font-medium"
+                    className="flex items-center gap-2 p-2.5 rounded-xl border border-[#2b303e] bg-[#12141a] hover:bg-[#20232e] transition-all text-xs text-slate-300 font-medium"
                   >
                     <span className="w-2 h-2 rounded-full bg-amber-500" />
                     Send via Email
@@ -1980,7 +1960,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
 
               {/* Dynamic Notification Message inside Modal */}
               {shareNotification && (
-                <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100/50 dark:border-emerald-900/40 text-emerald-600 dark:text-emerald-400 p-3 rounded-xl text-xs font-medium text-center animate-in fade-in slide-in-from-bottom-2 duration-200">
+                <div className="bg-emerald-950/20 border border-emerald-900/40 text-emerald-400 p-3 rounded-xl text-xs font-medium text-center animate-in fade-in slide-in-from-bottom-2 duration-200">
                   {shareNotification}
                 </div>
               )}
@@ -1992,7 +1972,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                   setShowShareModal(false);
                   setShareNotification(null);
                 }}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-xl transition-all"
+                className="px-4 py-2 bg-[#20232e] hover:bg-[#282d3b] text-slate-200 text-xs font-semibold rounded-xl transition-all"
               >
                 Close Panel
               </button>

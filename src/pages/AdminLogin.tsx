@@ -48,9 +48,10 @@ export default function AdminLogin({ onLoginSuccess, onNavigate }: AdminLoginPro
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // 1. Strict client-side check to ensure only admin@logify.com is permitted
-    if (normalizedEmail !== 'admin@logify.com') {
-      setError('Access Denied: Only admin@logify.com is permitted.');
+    // 1. Strict check to ensure authorized admin email is permitted
+    const isAllowedAdmin = normalizedEmail === 'expresslogify@gmail.com' || normalizedEmail === 'admin@logify.com';
+    if (!isAllowedAdmin) {
+      setError('Access Denied: Only expresslogify@gmail.com or admin@logify.com is permitted.');
       setLoading(false);
       return;
     }
@@ -60,24 +61,26 @@ export default function AdminLogin({ onLoginSuccess, onNavigate }: AdminLoginPro
       let loggedUser: any = null;
 
       if (clientSupabase) {
-        // Authenticate directly against Supabase if configured
-        const { data, error: sbError } = await clientSupabase.auth.signInWithPassword({
-          email: normalizedEmail,
-          password,
-        });
+        // Authenticate directly against Supabase if client instance is available
+        try {
+          const { data, error: sbError } = await clientSupabase.auth.signInWithPassword({
+            email: normalizedEmail,
+            password,
+          });
 
-        if (sbError) {
-          throw new Error(sbError.message);
+          if (!sbError && data?.session) {
+            authToken = data.session.access_token || '';
+            loggedUser = {
+              id: data.user?.id || 'admin-supabase',
+              email: normalizedEmail,
+              name: data.user?.user_metadata?.name || 'Logify Super Admin',
+              role: 'super_admin',
+              status: 'active',
+            };
+          }
+        } catch (sbErr) {
+          console.warn('Supabase client authentication skipped, falling back to server API:', sbErr);
         }
-
-        authToken = data.session?.access_token || '';
-        loggedUser = {
-          id: data.user?.id || 'admin-supabase',
-          email: normalizedEmail,
-          name: 'Logify Admin',
-          role: 'super_admin',
-          status: 'active',
-        };
       }
 
       // 2. Fallback / Sync with Backend Secure Controller
@@ -89,7 +92,7 @@ export default function AdminLogin({ onLoginSuccess, onNavigate }: AdminLoginPro
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || 'Authentication failed.');
+        throw new Error(data.error || 'Authentication failed. Please check your credentials.');
       }
 
       // Ensure we use the server's signed JWT token and mapped user
@@ -149,7 +152,7 @@ export default function AdminLogin({ onLoginSuccess, onNavigate }: AdminLoginPro
             <input
               type="email"
               required
-              placeholder="e.g. admin@logify.com"
+              placeholder="e.g. expresslogify@gmail.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 outline-none focus:border-amber-500 transition-all text-slate-900 dark:text-white"

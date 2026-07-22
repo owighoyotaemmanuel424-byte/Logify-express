@@ -1,5 +1,5 @@
 import React from 'react';
-import { Truck, Mail, Phone, MapPin, Linkedin, Instagram, Facebook } from 'lucide-react';
+import { Truck, Mail, Phone, MapPin, Linkedin, Instagram, Facebook, Lock } from 'lucide-react';
 import { Settings } from '../types.js';
 
 interface FooterProps {
@@ -58,6 +58,11 @@ export default function Footer({ onNavigate, settings }: FooterProps) {
               <li>
                 <button onClick={() => onNavigate('pricing')} className="hover:text-[#FFCC00] transition-colors cursor-pointer">
                   Get a Quote & Rates
+                </button>
+              </li>
+              <li>
+                <button onClick={() => onNavigate('auth')} className="hover:text-[#FFCC00] transition-colors cursor-pointer text-slate-500 hover:text-amber-400 font-mono text-[11px] flex items-center gap-1 mt-1">
+                  <Lock size={10} className="text-amber-500" /> Admin Portal
                 </button>
               </li>
             </ul>
