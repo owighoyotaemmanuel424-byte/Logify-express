@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, Mail, ArrowRight, Loader2, KeyRound, CheckCircle2, AlertCircle } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 interface AdminLoginProps {
   onLoginSuccess: (token: string, user: any) => void;
@@ -18,10 +19,10 @@ export default function AdminLogin({ onLoginSuccess, onNavigate }: AdminLoginPro
       const params = new URLSearchParams(window.location.search);
       if (params.get('expired') === 'true') {
         setError('Session expired. Please log in again.');
-        window.history.replaceState(null, '', '/secure-admin-portal-9x7k');
+        window.history.replaceState(null, '', '/admin/login');
       } else if (params.get('unauthorized') === 'true') {
         setError('Unauthorized access. Only authorized administrators are permitted.');
-        window.history.replaceState(null, '', '/secure-admin-portal-9x7k');
+        window.history.replaceState(null, '', '/admin/login');
       }
     } catch (e) {}
   }, []);
@@ -43,6 +44,24 @@ export default function AdminLogin({ onLoginSuccess, onNavigate }: AdminLoginPro
     }
 
     try {
+      let sbToken = '';
+      
+      // 1. Authenticate via Supabase Auth client if initialized
+      if (supabase) {
+        try {
+          const { data: sbData, error: sbErr } = await supabase.auth.signInWithPassword({
+            email: normalizedEmail,
+            password,
+          });
+          if (!sbErr && sbData?.session) {
+            sbToken = sbData.session.access_token;
+          }
+        } catch (sbException) {
+          console.warn('Supabase client authentication notice:', sbException);
+        }
+      }
+
+      // 2. Authenticate with backend workspace controller
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -54,15 +73,16 @@ export default function AdminLogin({ onLoginSuccess, onNavigate }: AdminLoginPro
         throw new Error(data.error || 'Authentication failed. Please check your credentials.');
       }
 
-      if (data.user?.role !== 'super_admin') {
-        throw new Error('Unauthorized role. Only super_admin role can access dashboard.');
+      if (data.user?.role !== 'super_admin' && data.user?.role !== 'admin') {
+        throw new Error('Unauthorized role. Only admin role can access dashboard.');
       }
 
-      setSuccessMsg('Authentication successful. Redirecting to workspace...');
+      const activeToken = sbToken || data.token;
+      setSuccessMsg('Supabase Admin Authentication successful. Redirecting to /admin/dashboard...');
       
       setTimeout(() => {
-        onLoginSuccess(data.token, data.user);
-      }, 800);
+        onLoginSuccess(activeToken, data.user);
+      }, 700);
     } catch (e: any) {
       setError(e.message || 'Authentication service error.');
       setLoading(false);
