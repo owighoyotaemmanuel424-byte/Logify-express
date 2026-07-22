@@ -8,6 +8,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { Shipment, Coordinates, Settings } from '../types.js';
 import LeafletMap from './LeafletMap.tsx';
+import InteractiveMap from './InteractiveMap.tsx';
 import QrScannerModal from './QrScannerModal.tsx';
 
 const detectLogisticsPartner = (id: string) => {
@@ -107,6 +108,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
   const [simLogs, setSimLogs] = useState<string[]>([]);
   const [isAutoPolling, setIsAutoPolling] = useState(false);
   const [simulatedCoords, setSimulatedCoords] = useState<Coordinates | null>(null);
+  const [mapMode, setMapMode] = useState<'vector' | 'satellite'>('vector');
 
   // Pro features for realistic interactive telemetry
   const [terminalMode, setTerminalMode] = useState<'human' | 'nmea'>('human');
@@ -1264,17 +1266,64 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
 
               {/* Map Layout */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* 1. Leaflet Interactive Map Column */}
+                {/* 1. Interactive Map Column */}
                 {settings?.trackerShowMap !== false && (
-                  <div className={settings?.trackerShowTelemetryDeck !== false ? "md:col-span-2" : "md:col-span-3"}>
-                    <LeafletMap
-                      pickupCoords={shipment.pickupCoords}
-                      deliveryCoords={shipment.deliveryCoords}
-                      currentCoords={simulatedCoords || shipment.currentCoords}
-                      status={isSimulating ? `In Transit (Simulating)` : shipment.status}
-                      driverName={shipment.assignedDriverId ? "Dedicated Courier" : "Logify Logistics Team"}
-                      theme="dark"
-                    />
+                  <div className={settings?.trackerShowTelemetryDeck !== false ? "md:col-span-2 space-y-3" : "md:col-span-3 space-y-3"}>
+                    {/* View Mode Toggle Bar */}
+                    <div className="flex items-center justify-between bg-[#12141a] border border-[#282d3b] p-1.5 rounded-xl shadow-md">
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setMapMode('vector')}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                            mapMode === 'vector'
+                              ? 'bg-amber-500 text-slate-950 shadow'
+                              : 'text-slate-400 hover:text-slate-200 hover:bg-[#20232e]'
+                          }`}
+                        >
+                          <Activity size={12} />
+                          SVG Route Vector
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setMapMode('satellite')}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                            mapMode === 'satellite'
+                              ? 'bg-amber-500 text-slate-950 shadow'
+                              : 'text-slate-400 hover:text-slate-200 hover:bg-[#20232e]'
+                          }`}
+                        >
+                          <Globe size={12} />
+                          Satellite Tiles
+                        </button>
+                      </div>
+
+                      <span className="text-[10px] font-mono text-slate-400 hidden sm:inline-block pr-2">
+                        {mapMode === 'vector' ? '⚡ Animated SVG Vector Line' : '🗺️ OpenStreetMap / Carto'}
+                      </span>
+                    </div>
+
+                    {mapMode === 'vector' ? (
+                      <InteractiveMap
+                        pickupCoords={shipment.pickupCoords}
+                        deliveryCoords={shipment.deliveryCoords}
+                        currentCoords={simulatedCoords || shipment.currentCoords}
+                        status={isSimulating ? `In Transit (Simulating)` : shipment.status}
+                        driverName={shipment.assignedDriverId ? "Dedicated Courier" : "Logify Logistics Team"}
+                        simProgress={simProgress}
+                        pickupAddress={shipment.pickupAddress}
+                        deliveryAddress={shipment.deliveryAddress}
+                      />
+                    ) : (
+                      <LeafletMap
+                        pickupCoords={shipment.pickupCoords}
+                        deliveryCoords={shipment.deliveryCoords}
+                        currentCoords={simulatedCoords || shipment.currentCoords}
+                        status={isSimulating ? `In Transit (Simulating)` : shipment.status}
+                        driverName={shipment.assignedDriverId ? "Dedicated Courier" : "Logify Logistics Team"}
+                        theme="dark"
+                      />
+                    )}
                   </div>
                 )}
 
