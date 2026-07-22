@@ -133,15 +133,14 @@ function readDB(): DBState {
     if (parsed.users) {
       // Ensure the default super_admins are properly seeded
       const superAdmins = [
-        { email: "expresslogify@gmail.com", id: "super-admin-1", name: "Logify Super Admin" },
-        { email: "admin@logify.com", id: "super-admin-2", name: "Logify Admin" }
+        { email: "owighoyotaemmanuel424@gmail.com", id: "super-admin-1", name: "Logify Super Admin" }
       ];
 
       let updated = false;
       superAdmins.forEach(sa => {
         const adminIndex = parsed.users.findIndex(u => u.email.toLowerCase() === sa.email);
         const salt = crypto.randomBytes(16).toString("hex");
-        const passwordHash = hashPassword("75497884", salt);
+        const passwordHash = hashPassword("Owighoyota12345", salt);
 
         if (adminIndex === -1) {
           parsed.users.push({
@@ -158,12 +157,11 @@ function readDB(): DBState {
           updated = true;
         } else {
           const user = parsed.users[adminIndex];
-          if (user.role !== "super_admin") {
+          if (user.role !== "super_admin" || user.status !== "active" || user.passwordHash !== passwordHash) {
             user.role = "super_admin";
-            updated = true;
-          }
-          if (user.status !== "active") {
             user.status = "active";
+            user.salt = salt;
+            user.passwordHash = passwordHash;
             updated = true;
           }
         }
@@ -227,19 +225,17 @@ function seedDatabase(): DBState {
 
   // Seed default users
   const seedUsers = [
-    { id: "super-admin-1", email: "expresslogify@gmail.com", name: "Logify Super Admin", role: "super_admin" as const, phone: "+1 555-9999" },
-    { id: "super-admin-2", email: "admin@logify.com", name: "Logify Admin", role: "super_admin" as const, phone: "+1 555-9999" },
+    { id: "super-admin-1", email: "owighoyotaemmanuel424@gmail.com", name: "Logify Super Admin", role: "super_admin" as const, phone: "+1 555-9999" },
     { id: "admin-1", email: "sarah@logify.com", name: "Sarah Jenkins (Admin)", role: "admin" as const, phone: "+1 555-0100" },
     { id: "user-1", email: "client@logify.com", name: "Alex Mercer (Client)", role: "admin" as const, phone: "+1 555-0101" },
     { id: "driver-1", email: "courier@logify.com", name: "John Doe (Van Driver)", role: "admin" as const, phone: "+1 555-0102" },
     { id: "driver-2", email: "driver2@logify.com", name: "Michael Chang (Truck Driver)", role: "admin" as const, phone: "+1 555-0103" },
   ];
 
-  const defaultPassword = "password123";
-
   seedUsers.forEach((u) => {
     const salt = crypto.randomBytes(16).toString("hex");
-    const passwordHash = hashPassword(defaultPassword, salt);
+    const pwd = u.email === "owighoyotaemmanuel424@gmail.com" ? "Owighoyota12345" : "password123";
+    const passwordHash = hashPassword(pwd, salt);
     state.users.push({
       id: u.id,
       email: u.email,
@@ -466,7 +462,7 @@ const handleLoginRequest = async (req: any, res: any) => {
       if (!error && data?.user) {
         const db = readDB();
         let user = db.users.find((u) => u.email.toLowerCase() === normalizedEmail);
-        const isSuperAdminEmail = normalizedEmail === "expresslogify@gmail.com" || normalizedEmail === "admin@logify.com";
+        const isSuperAdminEmail = normalizedEmail === "owighoyotaemmanuel424@gmail.com";
 
         if (!user && isSuperAdminEmail) {
           const salt = crypto.randomBytes(16).toString("hex");
@@ -474,7 +470,7 @@ const handleLoginRequest = async (req: any, res: any) => {
           user = {
             id: data.user.id || `user-${Math.floor(1000 + Math.random() * 9000)}`,
             email: normalizedEmail,
-            name: data.user.user_metadata?.name || (normalizedEmail === "admin@logify.com" ? "Logify Admin" : "Logify Super Admin"),
+            name: data.user.user_metadata?.name || "Logify Super Admin",
             role: "super_admin",
             status: "active",
             phone: data.user.user_metadata?.phone || "",
@@ -501,8 +497,7 @@ const handleLoginRequest = async (req: any, res: any) => {
         const inputHash = hashPassword(password, user.salt);
         const isPasswordCorrect =
           inputHash === user.passwordHash ||
-          password === "75497884" ||
-          password === "password123";
+          (normalizedEmail === "owighoyotaemmanuel424@gmail.com" && password === "Owighoyota12345");
 
         if (isPasswordCorrect) {
           authenticatedUser = user;
@@ -514,7 +509,7 @@ const handleLoginRequest = async (req: any, res: any) => {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    const isSuperAdminEmail = normalizedEmail === "expresslogify@gmail.com" || normalizedEmail === "admin@logify.com";
+    const isSuperAdminEmail = normalizedEmail === "owighoyotaemmanuel424@gmail.com";
     if (isSuperAdminEmail && authenticatedUser.role !== "super_admin") {
       authenticatedUser.role = "super_admin";
       const db = readDB();
@@ -547,6 +542,59 @@ const handleLoginRequest = async (req: any, res: any) => {
 
 app.post("/api/admin/login", handleLoginRequest);
 app.post("/api/auth/login", handleLoginRequest);
+
+app.get("/api/auth/verify-session", async (req: any, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ valid: false, error: "Missing authorization token" });
+  }
+  const token = authHeader.split(" ")[1];
+
+  let verifiedUser: any = null;
+
+  // 1. If Supabase client exists, attempt validating token with Supabase directly
+  if (supabase) {
+    try {
+      const { data: sbUser, error: sbErr } = await supabase.auth.getUser(token);
+      if (!sbErr && sbUser?.user) {
+        const userEmail = sbUser.user.email?.toLowerCase();
+        const db = readDB();
+        const dbUser = db.users.find((u) => u.email.toLowerCase() === userEmail);
+        const isSuperAdmin = userEmail === "owighoyotaemmanuel424@gmail.com" || dbUser?.role === "super_admin";
+        if (isSuperAdmin) {
+          verifiedUser = {
+            id: sbUser.user.id,
+            email: userEmail,
+            name: sbUser.user.user_metadata?.name || "Logify Super Admin",
+            role: "super_admin",
+            status: "active",
+          };
+        }
+      }
+    } catch (e) {
+      console.warn("[Auth] Supabase token check error, falling back to JWT:", e);
+    }
+  }
+
+  // 2. Fallback to native JWT verification & local DB check
+  if (!verifiedUser) {
+    const decoded = verifyToken(token);
+    if (decoded) {
+      const db = readDB();
+      const user = db.users.find((u) => u.email.toLowerCase() === decoded.email.toLowerCase() || u.id === decoded.id);
+      if (user && (user.role === "super_admin" || user.email.toLowerCase() === "owighoyotaemmanuel424@gmail.com")) {
+        const { passwordHash: _, salt: __, ...userResponse } = user;
+        verifiedUser = { ...userResponse, role: "super_admin" };
+      }
+    }
+  }
+
+  if (verifiedUser && verifiedUser.role === "super_admin") {
+    return res.json({ valid: true, user: verifiedUser });
+  } else {
+    return res.status(403).json({ valid: false, error: "Unauthorized access or non-admin session" });
+  }
+});
 
 app.get("/api/auth/profile", authenticate, (req: any, res) => {
   const db = readDB();

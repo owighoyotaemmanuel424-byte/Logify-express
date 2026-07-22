@@ -21,10 +21,10 @@ const defaultSupabaseKey =
 
 interface AdminLoginProps {
   onLoginSuccess: (token: string, user: any) => void;
-  onNavigate: (view: string) => void;
+  onNavigate?: (view: string) => void;
 }
 
-export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
+export default function AdminLogin({ onLoginSuccess, onNavigate }: AdminLoginProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -72,14 +72,14 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
       return;
     }
     const normalizedEmail = email.trim().toLowerCase();
-    const isAllowedAdmin = normalizedEmail === 'expresslogify@gmail.com' || normalizedEmail === 'admin@logify.com';
+    const isAllowedAdmin = normalizedEmail === 'owighoyotaemmanuel424@gmail.com';
     if (!isAllowedAdmin) {
-      setError('Access Denied: Only expresslogify@gmail.com or admin@logify.com is permitted.');
+      setError('Access Denied: Only owighoyotaemmanuel424@gmail.com is permitted.');
       return;
     }
 
     if (!supabaseClient) {
-      setError('Supabase Auth client is not active. Please provide your Supabase Project URL and Anon Key below.');
+      setError('Supabase Auth client is not active. Please provide your Supabase Project URL and Anon Key.');
       setShowSupabaseSettings(true);
       return;
     }
@@ -112,9 +112,9 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
     const normalizedEmail = email.trim().toLowerCase();
 
     // 1. Strict check to ensure authorized admin email is permitted
-    const isAllowedAdmin = normalizedEmail === 'expresslogify@gmail.com' || normalizedEmail === 'admin@logify.com';
+    const isAllowedAdmin = normalizedEmail === 'owighoyotaemmanuel424@gmail.com';
     if (!isAllowedAdmin) {
-      setError('Access Denied: Only expresslogify@gmail.com or admin@logify.com is permitted.');
+      setError('Access Denied: Only owighoyotaemmanuel424@gmail.com is permitted.');
       setLoading(false);
       return;
     }
@@ -137,7 +137,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
             loggedUser = {
               id: sbData.user?.id || 'admin-supabase',
               email: normalizedEmail,
-              name: sbData.user?.user_metadata?.name || (normalizedEmail === 'admin@logify.com' ? 'Logify Admin' : 'Logify Super Admin'),
+              name: sbData.user?.user_metadata?.name || 'Logify Super Admin',
               role: 'super_admin',
               status: 'active',
               authProvider: 'Supabase Auth',
@@ -198,23 +198,6 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
           <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
             Authorized administrative personnel only. System is protected by Supabase Authentication & security policies.
           </p>
-
-          {/* Supabase Engine Status Badge */}
-          <div className="pt-2 flex items-center justify-center">
-            <button
-              type="button"
-              onClick={() => setShowSupabaseSettings(!showSupabaseSettings)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold transition-all border cursor-pointer ${
-                supabaseClient
-                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
-                  : 'bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500/20'
-              }`}
-            >
-              <Database size={11} />
-              {supabaseClient ? 'Supabase Auth Engine Active' : 'Supabase Config (Click to setup)'}
-              <Settings2 size={10} className="ml-0.5 opacity-70" />
-            </button>
-          </div>
         </div>
 
         {/* Optional Supabase Config Panel */}
@@ -297,7 +280,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
             <input
               type="email"
               required
-              placeholder="e.g. expresslogify@gmail.com"
+              placeholder="e.g. owighoyotaemmanuel424@gmail.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 outline-none focus:border-amber-500 transition-all text-slate-900 dark:text-white"
@@ -328,6 +311,19 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
             <ArrowRight size={13} />
           </button>
         </form>
+
+        {/* Back to Public Site */}
+        {onNavigate && (
+          <div className="pt-2 text-center border-t border-slate-100 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={() => onNavigate('home')}
+              className="text-[11px] font-mono text-slate-500 hover:text-amber-500 transition-colors cursor-pointer"
+            >
+              &larr; Return to Public Logistics Site
+            </button>
+          </div>
+        )}
 
       </div>
     </div>

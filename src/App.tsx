@@ -99,34 +99,30 @@ export default function App() {
       .catch(() => {});
   }, []);
 
-  // Sync user profile if token exists
+  // Robust session checking mechanism that validates the super_admin role directly via server-side fetch
   const fetchProfile = async (authToken: string) => {
     setAuthLoading(true);
     try {
-      const response = await fetch('/api/auth/profile', {
+      const response = await fetch('/api/auth/verify-session', {
         headers: { Authorization: `Bearer ${authToken}` },
       });
-      if (response.ok) {
-        const uData = await response.json();
-        const uEmail = uData?.email?.trim().toLowerCase();
-        const isAllowedAdmin = uEmail === 'admin@logify.com' || uEmail === 'expresslogify@gmail.com';
-        const isSuperAdmin = uData?.role === 'super_admin' && isAllowedAdmin;
-        
-        if (!isSuperAdmin) {
-          // Immediately sign out and redirect silently to the homepage (do not expose error details)
-          localStorage.removeItem('logify_token');
-          document.cookie = `logify_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; Secure`;
-          setToken(null);
-          setUser(null);
-          window.history.replaceState(null, '', '/');
-          setView('home');
-        } else {
-          setUser(uData);
+      const data = await response.json();
+      
+      if (response.ok && data?.valid && data?.user && data?.user?.role === 'super_admin') {
+        const uEmail = data.user.email?.trim().toLowerCase();
+        if (uEmail === 'owighoyotaemmanuel424@gmail.com') {
+          setUser(data.user);
+          return;
         }
-      } else {
-        // Stale or invalid token
-        handleLogout(true);
       }
+
+      // Immediately sign out and redirect silently to the homepage if unauthorized
+      localStorage.removeItem('logify_token');
+      document.cookie = `logify_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; Secure`;
+      setToken(null);
+      setUser(null);
+      window.history.replaceState(null, '', '/');
+      setView('home');
     } catch (err) {
       handleLogout(true);
     } finally {
@@ -162,7 +158,7 @@ export default function App() {
       } else {
         if (user) {
           const uEmail = user.email?.trim().toLowerCase();
-          const isAllowedAdmin = uEmail === 'admin@logify.com' || uEmail === 'expresslogify@gmail.com';
+          const isAllowedAdmin = uEmail === 'owighoyotaemmanuel424@gmail.com';
           if (!isAllowedAdmin || user.role !== 'super_admin') {
             localStorage.removeItem('logify_token');
             document.cookie = `logify_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; Secure`;
