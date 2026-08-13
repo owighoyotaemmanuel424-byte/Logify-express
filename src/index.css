@@ -1,52 +1,74 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
-  --color-dhl-red: #D40010;
-  --color-dhl-yellow: #FFCC00;
-  --color-dhl-red-hover: #b8000e;
-  --color-dhl-yellow-hover: #e6b800;
-
+  --color-logify-navy: #0b1f33;
+  --color-logify-blue: #155e8a;
+  --color-logify-sky: #1d9bf0;
+  --color-logify-orange: #f59e0b;
+  --color-logify-green: #16a34a;
   --animate-scan: scan 2.5s ease-in-out infinite;
 
   @keyframes scan {
-    0%, 100% {
-      top: 0%;
-    }
-    50% {
-      top: 100%;
-    }
+    0%, 100% { top: 0%; }
+    50% { top: 100%; }
   }
 }
 
 @layer base {
+  html { scroll-behavior: smooth; }
   body {
-    @apply font-sans antialiased text-slate-800 dark:text-neutral-200 bg-slate-50 dark:bg-[#0b0b0b] transition-colors duration-200;
+    @apply font-sans antialiased text-slate-800 dark:text-slate-100 transition-colors duration-200;
+    background: #f3f6f8;
   }
+  h1, h2, h3, h4 { font-family: var(--font-display); }
+  ::selection { background: #f59e0b; color: #0b1f33; }
+  button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 }
 
-/* Clear View: Change all white backgrounds to ash in light mode */
-html:not(.dark) body {
-  background-color: #e5e8eb !important; /* Ash gray page background */
-}
+html:not(.dark) body { background: #f3f6f8 !important; }
+html.dark body { background: #071521 !important; }
 
-html:not(.dark) .bg-white {
-  background-color: #f4f6f8 !important; /* Soft, glare-free ash white container background */
-}
-
-html:not(.dark) .bg-slate-50 {
-  background-color: #e5e8eb !important; /* Match page background ash */
-}
-
-html:not(.dark) .bg-slate-100 {
-  background-color: #d9dee2 !important; /* Sightly darker ash slate accents */
-}
-
+/* Modern logistics surfaces */
+html:not(.dark) .bg-white { background-color: #ffffff !important; }
+html:not(.dark) .bg-slate-50 { background-color: #f3f6f8 !important; }
+html:not(.dark) .bg-slate-100 { background-color: #e8eef2 !important; }
 html:not(.dark) input,
 html:not(.dark) select,
-html:not(.dark) textarea {
-  background-color: #f4f6f8 !important; /* Ensure inputs match the soft ash white cards */
+html:not(.dark) textarea { background-color: #ffffff !important; }
+
+/* Replace the former carrier-like red/yellow visual language with a neutral logistics palette. */
+[class*="bg-[#D40511]"], [class*="bg-[#D40010]"], [class*="bg-[#111111]"] {
+  background-color: #0b1f33 !important;
+}
+[class*="text-[#D40511]"], [class*="text-[#D40010]"] { color: #155e8a !important; }
+[class*="text-[#FFCC00]"] { color: #f59e0b !important; }
+[class*="bg-[#FFCC00]"] { background-color: #f59e0b !important; }
+[class*="border-[#D40511]"], [class*="border-[#D40010]"] { border-color: #155e8a !important; }
+[class*="hover:bg-[#b8000e]"]:hover { background-color: #0a2b46 !important; }
+
+/* Consistent logistics card language */
+.rounded-xl, .rounded-2xl, .rounded-3xl { border-radius: 14px; }
+.shadow-sm { box-shadow: 0 1px 2px rgba(11,31,51,.05), 0 8px 24px rgba(11,31,51,.04); }
+
+/* Thin operational status bar */
+.logistics-status-bar {
+  background: #0b1f33;
+  color: #dce8f0;
+  border-bottom: 1px solid rgba(255,255,255,.08);
 }
 
+/* Scrollbar */
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: #e8eef2; }
+::-webkit-scrollbar-thumb { background: #9aabb8; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #6f8494; }
+html.dark ::-webkit-scrollbar-track { background: #0b1f33; }
+html.dark ::-webkit-scrollbar-thumb { background: #31516a; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}
