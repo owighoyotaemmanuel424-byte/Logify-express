@@ -11,64 +11,58 @@
   --color-logify-orange: #f59e0b;
   --color-logify-green: #16a34a;
   --animate-scan: scan 2.5s ease-in-out infinite;
-
-  @keyframes scan {
-    0%, 100% { top: 0%; }
-    50% { top: 100%; }
-  }
+  @keyframes scan { 0%,100% { top:0%; } 50% { top:100%; } }
 }
 
 @layer base {
-  html { scroll-behavior: smooth; }
-  body {
-    @apply font-sans antialiased text-slate-800 dark:text-slate-100 transition-colors duration-200;
-    background: #f3f6f8;
-  }
-  h1, h2, h3, h4 { font-family: var(--font-display); }
-  ::selection { background: #f59e0b; color: #0b1f33; }
-  button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+  html { scroll-behavior:smooth; }
+  body { @apply font-sans antialiased text-slate-800 dark:text-slate-100 transition-colors duration-200; background:#f3f6f8; }
+  h1,h2,h3,h4 { font-family:var(--font-display); }
+  ::selection { background:#f59e0b; color:#0b1f33; }
+  button,a,input,select,textarea { -webkit-tap-highlight-color:transparent; }
 }
+html:not(.dark) body { background:#f3f6f8 !important; }
+html.dark body { background:#071521 !important; }
+html:not(.dark) .bg-white { background-color:#fff !important; }
+html:not(.dark) .bg-slate-50 { background-color:#f3f6f8 !important; }
+html:not(.dark) .bg-slate-100 { background-color:#e8eef2 !important; }
+html:not(.dark) input,html:not(.dark) select,html:not(.dark) textarea { background-color:#fff !important; }
 
-html:not(.dark) body { background: #f3f6f8 !important; }
-html.dark body { background: #071521 !important; }
+/* Public logistics brand */
+[class*="bg-[#D40511]"],[class*="bg-[#D40010]"],[class*="bg-[#111111]"] { background-color:#0b1f33 !important; }
+[class*="text-[#D40511]"],[class*="text-[#D40010]"] { color:#155e8a !important; }
+[class*="text-[#FFCC00]"] { color:#f59e0b !important; }
+[class*="bg-[#FFCC00]"] { background-color:#f59e0b !important; }
+[class*="border-[#D40511]"],[class*="border-[#D40010]"] { border-color:#155e8a !important; }
+[class*="hover:bg-[#b8000e]"]:hover { background-color:#0a2b46 !important; }
 
-/* Modern logistics surfaces */
-html:not(.dark) .bg-white { background-color: #ffffff !important; }
-html:not(.dark) .bg-slate-50 { background-color: #f3f6f8 !important; }
-html:not(.dark) .bg-slate-100 { background-color: #e8eef2 !important; }
-html:not(.dark) input,
-html:not(.dark) select,
-html:not(.dark) textarea { background-color: #ffffff !important; }
+/* Admin control-tower theme */
+.bg-slate-900 { background-color:#0b1f33 !important; }
+.dark\:bg-slate-900 { background-color:#0b1f33 !important; }
+.bg-blue-600 { background-color:#155e8a !important; }
+.hover\:bg-blue-700:hover { background-color:#0b4668 !important; }
+.text-blue-600 { color:#155e8a !important; }
+.border-blue-500 { border-color:#1d9bf0 !important; }
+.ring-blue-500 { --tw-ring-color:#1d9bf0 !important; }
 
-/* Replace the former carrier-like red/yellow visual language with a neutral logistics palette. */
-[class*="bg-[#D40511]"], [class*="bg-[#D40010]"], [class*="bg-[#111111]"] {
-  background-color: #0b1f33 !important;
+.admin-control-tower {
+  background:radial-gradient(circle at 85% 0%,rgba(29,155,240,.12),transparent 30%),#f3f6f8;
 }
-[class*="text-[#D40511]"], [class*="text-[#D40010]"] { color: #155e8a !important; }
-[class*="text-[#FFCC00]"] { color: #f59e0b !important; }
-[class*="bg-[#FFCC00]"] { background-color: #f59e0b !important; }
-[class*="border-[#D40511]"], [class*="border-[#D40010]"] { border-color: #155e8a !important; }
-[class*="hover:bg-[#b8000e]"]:hover { background-color: #0a2b46 !important; }
+.dark .admin-control-tower { background:radial-gradient(circle at 85% 0%,rgba(29,155,240,.10),transparent 30%),#071521; }
+.admin-sidebar-brand { background:linear-gradient(180deg,#0b1f33 0%,#0a2b46 100%); }
+.admin-sidebar-brand .brand-mark { background:#f59e0b; color:#0b1f33; }
+.admin-active-nav { background:#155e8a !important; box-shadow:0 8px 24px rgba(21,94,138,.22); }
+.admin-metric { position:relative; overflow:hidden; }
+.admin-metric::after { content:""; position:absolute; inset:auto -20px -28px auto; width:90px; height:90px; border-radius:999px; background:rgba(29,155,240,.07); }
 
-/* Consistent logistics card language */
-.rounded-xl, .rounded-2xl, .rounded-3xl { border-radius: 14px; }
-.shadow-sm { box-shadow: 0 1px 2px rgba(11,31,51,.05), 0 8px 24px rgba(11,31,51,.04); }
-
-/* Thin operational status bar */
-.logistics-status-bar {
-  background: #0b1f33;
-  color: #dce8f0;
-  border-bottom: 1px solid rgba(255,255,255,.08);
-}
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 9px; height: 9px; }
-::-webkit-scrollbar-track { background: #e8eef2; }
-::-webkit-scrollbar-thumb { background: #9aabb8; border-radius: 999px; }
-::-webkit-scrollbar-thumb:hover { background: #6f8494; }
-html.dark ::-webkit-scrollbar-track { background: #0b1f33; }
-html.dark ::-webkit-scrollbar-thumb { background: #31516a; }
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
-}
+/* Consistent surfaces */
+.rounded-xl,.rounded-2xl,.rounded-3xl { border-radius:14px; }
+.shadow-sm { box-shadow:0 1px 2px rgba(11,31,51,.05),0 8px 24px rgba(11,31,51,.04); }
+.logistics-status-bar { background:#0b1f33; color:#dce8f0; border-bottom:1px solid rgba(255,255,255,.08); }
+::-webkit-scrollbar { width:9px; height:9px; }
+::-webkit-scrollbar-track { background:#e8eef2; }
+::-webkit-scrollbar-thumb { background:#9aabb8; border-radius:999px; }
+::-webkit-scrollbar-thumb:hover { background:#6f8494; }
+html.dark ::-webkit-scrollbar-track { background:#0b1f33; }
+html.dark ::-webkit-scrollbar-thumb { background:#31516a; }
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.01ms !important; } }
