@@ -3,23 +3,16 @@
   "name": "logify-express",
   "main": "worker/index.ts",
   "compatibility_date": "2026-07-22",
-  "observability": {
-    "enabled": true
-  },
+  "observability": { "enabled": true },
   "assets": {
     "directory": "./dist",
     "not_found_handling": "single-page-application"
   },
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "logify-logs",
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
-      "migrations_dir": "migrations"
-    }
-  ],
-  "vars": {
-    "LOG_API_KEY": ""
-  },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "logify-logs",
+    "database_id": "b621b2be-f372-4236-ae6d-53e9d93a9b80",
+    "migrations_dir": "migrations"
+  }],
   "compatibility_flags": ["nodejs_compat"]
 }
