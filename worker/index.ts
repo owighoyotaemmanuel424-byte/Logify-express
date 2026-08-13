@@ -1,26 +1,167 @@
-interface Env { ASSETS: Fetcher; DB: D1Database; LOG_API_KEY?: string; ADMIN_EMAIL?: string; ADMIN_PASSWORD?: string; JWT_SECRET?: string }
-type LogLevel = "debug" | "info" | "warn" | "error" | "fatal";
-const H = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
-const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: H });
-const validLevel = (v: unknown): v is LogLevel => ["debug", "info", "warn", "error", "fatal"].includes(String(v));
-function auth(req: Request, env: Env) {
-  if (!env.LOG_API_KEY) return false;
-  const h = req.headers.get("authorization");
-  const key = h?.startsWith("Bearer ") ? h.slice(7).trim() : req.headers.get("x-api-key")?.trim();
-  return !key || key !== env.LOG_API_KEY;
+interface Env {
+  ASSETS: Fetcher;
+  DB: D1Database;
+  LOG_API_KEY?: string;
+  ADMIN_EMAIL?: string;
+  ADMIN_PASSWORD?: string;
+  JWT_SECRET?: string;
 }
-function mapLog(row: Record<string, unknown>) { let metadata=null; if(row.metadata) try{metadata=JSON.parse(String(row.metadata))}catch{} return {...row,id:String(row.id),level:String(row.level),source:row.source==null?null:String(row.source),metadata}; }
-function mapShipment(row: Record<string, unknown>) { let packageDimensions=null; if(row.package_dimensions) try{packageDimensions=JSON.parse(String(row.package_dimensions))}catch{} return { id:String(row.id), senderName:String(row.sender_name), senderEmail:String(row.sender_email), senderPhone:String(row.sender_phone), receiverName:String(row.receiver_name), receiverEmail:row.receiver_email==null?null:String(row.receiver_email), receiverPhone:row.receiver_phone==null?null:String(row.receiver_phone), pickupAddress:String(row.pickup_address), deliveryAddress:String(row.delivery_address), weight:Number(row.weight), type:String(row.type), packageValue:Number(row.package_value||0), packageDimensions, pickupDate:row.pickup_date, deliveryType:String(row.delivery_type||'Standard'), status:String(row.status||'Pending'), price:Number(row.price||0), estimatedDelivery:row.estimated_delivery, assignedDriverId:row.assigned_driver_id, location:row.location, tag:row.tag, description:row.description, invoiceDocName:row.invoice_doc_name, invoiceDocData:row.invoice_doc_data, labelDocName:row.label_doc_name, labelDocData:row.label_doc_data, proofOfDelivery:row.proof_of_delivery, createdAt:row.created_at, updatedAt:row.updated_at }; }
-async function ensureShipmentsTable(env: Env) { await env.DB.prepare(`CREATE TABLE IF NOT EXISTS shipments (id TEXT PRIMARY KEY,sender_name TEXT NOT NULL,sender_email TEXT NOT NULL,sender_phone TEXT NOT NULL,receiver_name TEXT NOT NULL,receiver_email TEXT,receiver_phone TEXT,pickup_address TEXT NOT NULL,delivery_address TEXT NOT NULL,weight REAL NOT NULL,type TEXT NOT NULL,package_value REAL DEFAULT 0,package_dimensions TEXT,pickup_date TEXT,delivery_type TEXT NOT NULL DEFAULT 'Standard',status TEXT NOT NULL DEFAULT 'Pending',price REAL NOT NULL DEFAULT 0,estimated_delivery TEXT,assigned_driver_id TEXT,location TEXT,tag TEXT,description TEXT,invoice_doc_name TEXT,invoice_doc_data TEXT,label_doc_name TEXT,label_doc_data TEXT,proof_of_delivery TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)`).run(); }
-function b64url(data: ArrayBuffer | string) { const bytes=typeof data==='string'?new TextEncoder().encode(data):new Uint8Array(data); let s=''; for(const b of bytes)s+=String.fromCharCode(b); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
-async function signJwt(payload: Record<string,unknown>, secret: string) { const enc=b64url(JSON.stringify({alg:'HS256',typ:'JWT'}))+'.'+b64url(JSON.stringify(payload)); const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign']); const sig=await crypto.subtle.sign('HMAC',key,new TextEncoder().encode(enc)); return enc+'.'+b64url(sig); }
-async function verifyJwt(token: string, secret: string) { try { const [h,p,s]=token.split('.'); if(!h||!p||!s)return null; const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),{name:'HMAC',hash:'SHA-256'},false,['verify']); const raw=s.replace(/-/g,'+').replace(/_/g,'/'); const pad=raw+'='.repeat((4-raw.length%4)%4); const sig=Uint8Array.from(atob(pad),c=>c.charCodeAt(0)); const ok=await crypto.subtle.verify('HMAC',key,sig,new TextEncoder().encode(h+'.'+p)); if(!ok)return null; const bp=p.replace(/-/g,'+').replace(/_/g,'/'); return JSON.parse(atob(bp+'='.repeat((4-bp.length%4)%4))); } catch{return null;} }
-async function adminLogin(req: Request, env: Env) { if(!env.ADMIN_EMAIL||!env.ADMIN_PASSWORD||!env.JWT_SECRET)return json({success:false,error:'Admin authentication is not configured on this deployment. Add ADMIN_EMAIL, ADMIN_PASSWORD and JWT_SECRET as Cloudflare secrets.'},503); let x:any;try{x=await req.json()}catch{return json({success:false,error:'Invalid JSON body'},400)} const email=typeof x?.email==='string'?x.email.trim().toLowerCase():''; const password=typeof x?.password==='string'?x.password:''; if(!email||!password)return json({success:false,error:'Missing email or password'},400); if(email!==env.ADMIN_EMAIL.trim().toLowerCase()||password!==env.ADMIN_PASSWORD)return json({success:false,error:'Invalid email or password'},401); const user={id:'super-admin-1',email:env.ADMIN_EMAIL.trim().toLowerCase(),name:'Logify Super Admin',role:'super_admin',status:'active'}; const token=await signJwt({id:user.id,email:user.email,role:user.role,iat:Math.floor(Date.now()/1000),exp:Math.floor(Date.now()/1000)+7*86400},env.JWT_SECRET); return json({user,token}); }
-async function verifySession(req: Request, env: Env) { if(!env.JWT_SECRET)return json({valid:false,error:'Admin authentication is not configured.'},503); const h=req.headers.get('authorization'); if(!h?.startsWith('Bearer '))return json({valid:false,error:'Missing authorization token'},401); const p=await verifyJwt(h.slice(7).trim(),env.JWT_SECRET); if(!p||p.role!=='super_admin'||(p.exp&&Number(p.exp)<Date.now()/1000))return json({valid:false,error:'Invalid or expired token'},401); return json({valid:true,user:{id:p.id,email:p.email,name:'Logify Super Admin',role:'super_admin',status:'active'}}); }
-async function shipments(req: Request, env: Env, id: string|null) { await ensureShipmentsTable(env); const requireAdmin=async()=>{if(!env.JWT_SECRET)return false;const h=req.headers.get('authorization');if(!h?.startsWith('Bearer '))return false;const p=await verifyJwt(h.slice(7).trim(),env.JWT_SECRET);return !!p&&p.role==='super_admin'&&(!p.exp||Number(p.exp)>=Date.now()/1000)}; if(!(await requireAdmin()))return json({error:'Unauthorized'},401);
- if(req.method==='GET'){ if(id){const r=await env.DB.prepare('SELECT * FROM shipments WHERE id=?').bind(id).first<Record<string,unknown>>();return r?json(mapShipment(r)):json({error:'Shipment not found'},404)} const r=await env.DB.prepare('SELECT * FROM shipments ORDER BY created_at DESC').all();return json((r.results||[]).map(mapShipment)); }
- if(req.method==='POST'&&!id){let x:any;try{x=await req.json()}catch{return json({error:'Invalid JSON body'},400)} const required=['senderName','senderEmail','senderPhone','receiverName','pickupAddress','deliveryAddress'];for(const k of required)if(typeof x?.[k]!=='string'||!x[k].trim())return json({error:`${k} is required`},400); const weight=Number(x.weight);if(!Number.isFinite(weight)||weight<=0)return json({error:'Weight must be greater than zero'},400); const type=String(x.type||'Standard'),deliveryType=x.deliveryType==='Express'?'Express':'Standard';const packageValue=Number(x.packageValue||0);const dims=x.packageDimensions&&typeof x.packageDimensions==='object'&&!Array.isArray(x.packageDimensions)?x.packageDimensions:null; const distance=Math.max(15,(String(x.pickupAddress).length+String(x.deliveryAddress).length)*4.5);let price=15+(weight*3.5)+(distance*0.8);if(deliveryType==='Express')price*=1.5;if(type==='Fragile')price+=25;price=Number(price.toFixed(2));const now=new Date(),createdAt=now.toISOString(),estimated=new Date(now.getTime()+((deliveryType==='Express'?1:4)*86400000)).toISOString();const idNew=`LOG-${Math.random().toString(36).slice(2,8).toUpperCase()}-US`;await env.DB.prepare(`INSERT INTO shipments (id,sender_name,sender_email,sender_phone,receiver_name,receiver_email,receiver_phone,pickup_address,delivery_address,weight,type,package_value,package_dimensions,pickup_date,delivery_type,status,price,estimated_delivery,assigned_driver_id,location,tag,description,invoice_doc_name,invoice_doc_data,label_doc_name,label_doc_data,proof_of_delivery,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(idNew,x.senderName.trim(),x.senderEmail.trim(),x.senderPhone.trim(),x.receiverName.trim(),x.receiverEmail?String(x.receiverEmail).trim():null,x.receiverPhone?String(x.receiverPhone).trim():null,x.pickupAddress.trim(),x.deliveryAddress.trim(),weight,type,Number.isFinite(packageValue)?packageValue:0,dims?JSON.stringify(dims):null,x.pickupDate||createdAt.slice(0,10),deliveryType,'Pending',price,estimated,null,null,null,null,x.invoiceDocName||null,x.invoiceDocData||null,x.labelDocName||null,x.labelDocData||null,null,createdAt,createdAt).run();const r=await env.DB.prepare('SELECT * FROM shipments WHERE id=?').bind(idNew).first<Record<string,unknown>>();return json(mapShipment(r!),201); }
- if(req.method==='PUT'&&id){const old=await env.DB.prepare('SELECT * FROM shipments WHERE id=?').bind(id).first<Record<string,unknown>>();if(!old)return json({error:'Shipment not found'},404);let x:any;try{x=await req.json()}catch{return json({error:'Invalid JSON body'},400)} const status=x.status===undefined?old.status:String(x.status);const allowed=['Pending','Picked Up','In Transit','Out for Delivery','Delivered','Cancelled'];if(!allowed.includes(status))return json({error:'Invalid shipment status'},400);const driver=x.assignedDriverId===undefined?old.assigned_driver_id:x.assignedDriverId||null;const location=x.location===undefined?old.location:x.location||null;const description=x.description===undefined?old.description:x.description||null;const tag=x.tag===undefined?old.tag:x.tag||null;await env.DB.prepare('UPDATE shipments SET status=?,assigned_driver_id=?,location=?,description=?,tag=?,updated_at=? WHERE id=?').bind(status,driver,location,description,tag,new Date().toISOString(),id).run();const r=await env.DB.prepare('SELECT * FROM shipments WHERE id=?').bind(id).first<Record<string,unknown>>();return json(mapShipment(r!)); }
- if(req.method==='DELETE'&&id){const r=await env.DB.prepare('DELETE FROM shipments WHERE id=?').bind(id).run();return r.meta.changes?json({success:true,deleted:id}):json({error:'Shipment not found'},404)} return json({error:'Method not allowed'},405); }
-async function handle(req: Request, env: Env) { const u=new URL(req.url), p=u.pathname.split('/').filter(Boolean), id=p.length===3?p[2]:null; if(p.join('/')==='api/auth/login'&&req.method==='POST')return adminLogin(req,env); if(p.join('/')==='api/auth/verify-session'&&req.method==='GET')return verifySession(req,env); if(p[0]==='api'&&p[1]==='shipments')return shipments(req,env,id); if(p.join('/')==='api/logs' || (p[0]==='api'&&p[1]==='logs')){if(auth(req,env))return json({success:false,error:'Unauthorized'},401);if(req.method==='GET'){if(id){const r=await env.DB.prepare('SELECT * FROM logs WHERE id=?').bind(id).first<Record<string,unknown>>();return r?json({success:true,log:mapLog(r)}):json({success:false,error:'Log not found'},404)}const limit=Math.min(Math.max(Number(u.searchParams.get('limit')||50),1),200),offset=Math.max(Number(u.searchParams.get('offset')||0),0),f:string[]=[],b:unknown[]=[],level=u.searchParams.get('level'),source=u.searchParams.get('source'),q=u.searchParams.get('q');if(level){f.push('level=?');b.push(level)}if(source){f.push('source=?');b.push(source)}if(q){f.push('message LIKE ?');b.push(`%${q}%`)}const w=f.length?` WHERE ${f.join(' AND ')}`:'';const r=await env.DB.prepare(`SELECT * FROM logs${w} ORDER BY created_at DESC LIMIT ? OFFSET ?`).bind(...b,limit,offset).all();const c=await env.DB.prepare(`SELECT COUNT(*) count FROM logs${w}`).bind(...b).first<{count:number}>();return json({success:true,logs:(r.results||[]).map(mapLog),total:Number(c?.count||0),limit,offset});}if(req.method==='POST'&&!id){let x:any;try{x=await req.json()}catch{return json({success:false,error:'Invalid JSON body'},400)}const msg=typeof x?.message==='string'?x.message.trim():'';if(!validLevel(x?.level)||!msg||msg.length>10000)return json({success:false,error:'Invalid level or message'},400);const now=new Date().toISOString(),lid=crypto.randomUUID();await env.DB.prepare('INSERT INTO logs (id,level,message,source,metadata,created_at,updated_at) VALUES (?,?,?,?,?,?,?)').bind(lid,x.level,msg,x.source==null?null:String(x.source).trim(),x.metadata==null?null:JSON.stringify(x.metadata),now,now).run();const r=await env.DB.prepare('SELECT * FROM logs WHERE id=?').bind(lid).first<Record<string,unknown>>();return json({success:true,log:mapLog(r!)},201);}if(req.method==='PUT'&&id){const old=await env.DB.prepare('SELECT * FROM logs WHERE id=?').bind(id).first<Record<string,unknown>>();if(!old)return json({success:false,error:'Log not found'},404);let x:any;try{x=await req.json()}catch{return json({success:false,error:'Invalid JSON body'},400)}const level=x.level===undefined?old.level:x.level,msg=x.message===undefined?String(old.message):String(x.message).trim();if(!validLevel(level)||!msg)return json({success:false,error:'Invalid level or message'},400);let meta=old.metadata==null?null:String(old.metadata);if(x.metadata!==undefined)meta=x.metadata==null?null:JSON.stringify(x.metadata);await env.DB.prepare('UPDATE logs SET level=?,message=?,source=?,metadata=?,updated_at=? WHERE id=?').bind(level,msg,x.source===undefined?old.source:x.source==null?null:String(x.source).trim(),meta,new Date().toISOString(),id).run();const r=await env.DB.prepare('SELECT * FROM logs WHERE id=?').bind(id).first<Record<string,unknown>>();return json({success:true,log:mapLog(r!)});}if(req.method==='DELETE'){if(id){const r=await env.DB.prepare('DELETE FROM logs WHERE id=?').bind(id).run();return r.meta.changes?json({success:true,deleted:id}):json({success:false,error:'Log not found'},404)}await env.DB.prepare('DELETE FROM logs').run();return json({success:true,message:'All logs deleted'});}return json({success:false,error:'Method not allowed'},405);} return env.ASSETS.fetch(req); }
-export default { async fetch(req: Request, env: Env){try{return await handle(req,env)}catch(e){console.error(e);return json({success:false,error:'Internal server error'},500)}} };
+
+type LogLevel = "debug" | "info" | "warn" | "error" | "fatal";
+const headers = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
+const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers });
+const levels: LogLevel[] = ["debug", "info", "warn", "error", "fatal"];
+
+function requireLogKey(req: Request, env: Env) {
+  if (!env.LOG_API_KEY) return false;
+  const auth = req.headers.get("authorization");
+  const key = auth?.startsWith("Bearer ") ? auth.slice(7).trim() : req.headers.get("x-api-key")?.trim();
+  return Boolean(key) && key === env.LOG_API_KEY;
+}
+
+function base64url(value: string | ArrayBuffer) {
+  const bytes = typeof value === "string" ? new TextEncoder().encode(value) : new Uint8Array(value);
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+async function jwtSign(payload: Record<string, unknown>, secret: string) {
+  const body = base64url(JSON.stringify(payload));
+  const encoded = `${base64url(JSON.stringify({ alg: "HS256", typ: "JWT" }))}.${body}`;
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(encoded));
+  return `${encoded}.${base64url(signature)}`;
+}
+
+async function jwtVerify(token: string, secret: string): Promise<Record<string, unknown> | null> {
+  try {
+    const [header, body, signature] = token.split(".");
+    if (!header || !body || !signature) return null;
+    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
+    const raw = signature.replace(/-/g, "+").replace(/_/g, "/");
+    const sig = Uint8Array.from(atob(raw + "=".repeat((4 - raw.length % 4) % 4)), c => c.charCodeAt(0));
+    const valid = await crypto.subtle.verify("HMAC", key, sig, new TextEncoder().encode(`${header}.${body}`));
+    if (!valid) return null;
+    const rawBody = body.replace(/-/g, "+").replace(/_/g, "/");
+    return JSON.parse(atob(rawBody + "=".repeat((4 - rawBody.length % 4) % 4)));
+  } catch { return null; }
+}
+
+async function adminSession(req: Request, env: Env) {
+  if (!env.JWT_SECRET || !env.ADMIN_EMAIL || !env.ADMIN_PASSWORD) return null;
+  const auth = req.headers.get("authorization");
+  if (!auth?.startsWith("Bearer ")) return null;
+  const payload = await jwtVerify(auth.slice(7).trim(), env.JWT_SECRET);
+  if (!payload || payload.role !== "super_admin") return null;
+  if (payload.exp && Number(payload.exp) < Date.now() / 1000) return null;
+  return payload;
+}
+
+async function login(req: Request, env: Env) {
+  if (!env.JWT_SECRET || !env.ADMIN_EMAIL || !env.ADMIN_PASSWORD) return json({ success: false, error: "Admin authentication is not configured." }, 503);
+  let body: any;
+  try { body = await req.json(); } catch { return json({ success: false, error: "Invalid JSON body" }, 400); }
+  const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+  const password = typeof body?.password === "string" ? body.password : "";
+  if (!email || !password) return json({ success: false, error: "Missing email or password" }, 400);
+  if (email !== env.ADMIN_EMAIL.trim().toLowerCase() || password !== env.ADMIN_PASSWORD) return json({ success: false, error: "Invalid email or password" }, 401);
+  const now = Math.floor(Date.now() / 1000);
+  const user = { id: "super-admin-1", email, name: "Logify Super Admin", role: "super_admin", status: "active" };
+  const token = await jwtSign({ ...user, iat: now, exp: now + 7 * 86400 }, env.JWT_SECRET);
+  return json({ success: true, user, token });
+}
+
+async function ensureShipments(env: Env) {
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS shipments (id TEXT PRIMARY KEY,sender_name TEXT NOT NULL,sender_email TEXT NOT NULL,sender_phone TEXT NOT NULL,receiver_name TEXT NOT NULL,receiver_email TEXT,receiver_phone TEXT,pickup_address TEXT NOT NULL,delivery_address TEXT NOT NULL,weight REAL NOT NULL,type TEXT NOT NULL,package_value REAL DEFAULT 0,package_dimensions TEXT,pickup_date TEXT,delivery_type TEXT NOT NULL DEFAULT 'Standard',status TEXT NOT NULL DEFAULT 'Pending',price REAL NOT NULL DEFAULT 0,estimated_delivery TEXT,assigned_driver_id TEXT,location TEXT,tag TEXT,description TEXT,invoice_doc_name TEXT,invoice_doc_data TEXT,label_doc_name TEXT,label_doc_data TEXT,proof_of_delivery TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)`).run();
+}
+
+function mapShipment(row: Record<string, unknown>) {
+  let dimensions = null;
+  if (row.package_dimensions) try { dimensions = JSON.parse(String(row.package_dimensions)); } catch {}
+  return {
+    id: String(row.id), senderName: String(row.sender_name), senderEmail: String(row.sender_email), senderPhone: String(row.sender_phone),
+    receiverName: String(row.receiver_name), receiverEmail: row.receiver_email ?? null, receiverPhone: row.receiver_phone ?? null,
+    pickupAddress: String(row.pickup_address), deliveryAddress: String(row.delivery_address), weight: Number(row.weight), type: String(row.type),
+    packageValue: Number(row.package_value || 0), packageDimensions: dimensions, pickupDate: row.pickup_date,
+    deliveryType: String(row.delivery_type || "Standard"), status: String(row.status || "Pending"), price: Number(row.price || 0),
+    estimatedDelivery: row.estimated_delivery, assignedDriverId: row.assigned_driver_id, location: row.location, tag: row.tag,
+    description: row.description, invoiceDocName: row.invoice_doc_name, invoiceDocData: row.invoice_doc_data,
+    labelDocName: row.label_doc_name, labelDocData: row.label_doc_data, proofOfDelivery: row.proof_of_delivery,
+    createdAt: row.created_at, updatedAt: row.updated_at
+  };
+}
+
+async function shipments(req: Request, env: Env, id: string | null) {
+  if (!await adminSession(req, env)) return json({ error: "Unauthorized" }, 401);
+  await ensureShipments(env);
+  if (req.method === "GET") {
+    if (id) {
+      const row = await env.DB.prepare("SELECT * FROM shipments WHERE id=?").bind(id).first<Record<string, unknown>>();
+      return row ? json(mapShipment(row)) : json({ error: "Shipment not found" }, 404);
+    }
+    const result = await env.DB.prepare("SELECT * FROM shipments ORDER BY created_at DESC").all();
+    return json((result.results || []).map(mapShipment));
+  }
+  if (req.method === "POST" && !id) {
+    let x: any; try { x = await req.json(); } catch { return json({ error: "Invalid JSON body" }, 400); }
+    for (const key of ["senderName", "senderEmail", "senderPhone", "receiverName", "pickupAddress", "deliveryAddress"]) if (typeof x?.[key] !== "string" || !x[key].trim()) return json({ error: `${key} is required` }, 400);
+    const weight = Number(x.weight); if (!Number.isFinite(weight) || weight <= 0) return json({ error: "Weight must be greater than zero" }, 400);
+    const deliveryType = x.deliveryType === "Express" ? "Express" : "Standard";
+    const type = String(x.type || "Standard");
+    const packageValue = Number(x.packageValue || 0);
+    const dimensions = x.packageDimensions && typeof x.packageDimensions === "object" && !Array.isArray(x.packageDimensions) ? JSON.stringify(x.packageDimensions) : null;
+    const distance = Math.max(15, (x.pickupAddress.length + x.deliveryAddress.length) * 4.5);
+    let price = 15 + weight * 3.5 + distance * 0.8;
+    if (deliveryType === "Express") price *= 1.5;
+    if (type === "Fragile") price += 25;
+    const now = new Date(); const createdAt = now.toISOString(); const estimated = new Date(now.getTime() + (deliveryType === "Express" ? 86400000 : 4 * 86400000)).toISOString();
+    const newId = `LOG-${crypto.randomUUID().slice(0, 8).toUpperCase()}-US`;
+    await env.DB.prepare(`INSERT INTO shipments (id,sender_name,sender_email,sender_phone,receiver_name,receiver_email,receiver_phone,pickup_address,delivery_address,weight,type,package_value,package_dimensions,pickup_date,delivery_type,status,price,estimated_delivery,assigned_driver_id,location,tag,description,invoice_doc_name,invoice_doc_data,label_doc_name,label_doc_data,proof_of_delivery,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(newId,x.senderName.trim(),x.senderEmail.trim(),x.senderPhone.trim(),x.receiverName.trim(),x.receiverEmail ? String(x.receiverEmail).trim() : null,x.receiverPhone ? String(x.receiverPhone).trim() : null,x.pickupAddress.trim(),x.deliveryAddress.trim(),weight,type,Number.isFinite(packageValue) ? packageValue : 0,dimensions,x.pickupDate || createdAt.slice(0,10),deliveryType,"Pending",Number(price.toFixed(2)),estimated,null,null,null,x.description || null,x.invoiceDocName || null,x.invoiceDocData || null,x.labelDocName || null,x.labelDocData || null,null,createdAt,createdAt).run();
+    const row = await env.DB.prepare("SELECT * FROM shipments WHERE id=?").bind(newId).first<Record<string, unknown>>();
+    return json(mapShipment(row!), 201);
+  }
+  if (req.method === "PUT" && id) {
+    const old = await env.DB.prepare("SELECT * FROM shipments WHERE id=?").bind(id).first<Record<string, unknown>>(); if (!old) return json({ error: "Shipment not found" }, 404);
+    let x: any; try { x = await req.json(); } catch { return json({ error: "Invalid JSON body" }, 400); }
+    const status = x.status === undefined ? String(old.status) : String(x.status);
+    if (!["Pending","Picked Up","In Transit","Out for Delivery","Delivered","Cancelled"].includes(status)) return json({ error: "Invalid shipment status" }, 400);
+    await env.DB.prepare("UPDATE shipments SET status=?,assigned_driver_id=?,location=?,description=?,tag=?,updated_at=? WHERE id=?").bind(status,x.assignedDriverId === undefined ? old.assigned_driver_id : x.assignedDriverId || null,x.location === undefined ? old.location : x.location || null,x.description === undefined ? old.description : x.description || null,x.tag === undefined ? old.tag : x.tag || null,new Date().toISOString(),id).run();
+    const row = await env.DB.prepare("SELECT * FROM shipments WHERE id=?").bind(id).first<Record<string, unknown>>(); return json(mapShipment(row!));
+  }
+  if (req.method === "DELETE" && id) { const result = await env.DB.prepare("DELETE FROM shipments WHERE id=?").bind(id).run(); return result.meta.changes ? json({ success: true, deleted: id }) : json({ error: "Shipment not found" }, 404); }
+  return json({ error: "Method not allowed" }, 405);
+}
+
+function mapLog(row: Record<string, unknown>) { let metadata = null; if (row.metadata) try { metadata = JSON.parse(String(row.metadata)); } catch {} return { ...row, id: String(row.id), level: String(row.level), source: row.source == null ? null : String(row.source), metadata }; }
+
+async function logs(req: Request, env: Env, id: string | null) {
+  if (!env.LOG_API_KEY || !requireLogKey(req, env)) return json({ success: false, error: "Unauthorized" }, 401);
+  if (req.method === "GET") {
+    if (id) { const row = await env.DB.prepare("SELECT * FROM logs WHERE id=?").bind(id).first<Record<string, unknown>>(); return row ? json({ success: true, log: mapLog(row) }) : json({ success: false, error: "Log not found" }, 404); }
+    const limit = Math.min(Math.max(Number(new URL(req.url).searchParams.get("limit") || 50), 1), 200);
+    const result = await env.DB.prepare("SELECT * FROM logs ORDER BY created_at DESC LIMIT ?").bind(limit).all();
+    return json({ success: true, logs: (result.results || []).map(mapLog), limit });
+  }
+  if (req.method === "POST" && !id) {
+    let x: any; try { x = await req.json(); } catch { return json({ success: false, error: "Invalid JSON body" }, 400); }
+    const message = typeof x?.message === "string" ? x.message.trim() : "";
+    if (!levels.includes(x?.level) || !message || message.length > 10000) return json({ success: false, error: "Invalid level or message" }, 400);
+    const now = new Date().toISOString(); const logId = crypto.randomUUID();
+    await env.DB.prepare("INSERT INTO logs (id,level,message,source,metadata,created_at,updated_at) VALUES (?,?,?,?,?,?,?)").bind(logId,x.level,message,x.source == null ? null : String(x.source).trim(),x.metadata == null ? null : JSON.stringify(x.metadata),now,now).run();
+    const row = await env.DB.prepare("SELECT * FROM logs WHERE id=?").bind(logId).first<Record<string, unknown>>(); return json({ success: true, log: mapLog(row!) }, 201);
+  }
+  if (req.method === "DELETE") { if (id) { const result = await env.DB.prepare("DELETE FROM logs WHERE id=?").bind(id).run(); return result.meta.changes ? json({ success: true, deleted: id }) : json({ success: false, error: "Log not found" }, 404); } await env.DB.prepare("DELETE FROM logs").run(); return json({ success: true }); }
+  return json({ success: false, error: "Method not allowed" }, 405);
+}
+
+async function handle(req: Request, env: Env) {
+  const url = new URL(req.url); const parts = url.pathname.split("/").filter(Boolean); const id = parts.length === 3 ? parts[2] : null;
+  if (url.pathname === "/api/auth/login" && req.method === "POST") return login(req, env);
+  if (url.pathname === "/api/auth/verify-session" && req.method === "GET") return adminSession(req, env) ? json({ valid: true }) : json({ valid: false }, 401);
+  if (parts[0] === "api" && parts[1] === "shipments") return shipments(req, env, id);
+  if (parts[0] === "api" && parts[1] === "logs") return logs(req, env, id);
+  return env.ASSETS.fetch(req);
+}
+
+export default { async fetch(req: Request, env: Env) { try { return await handle(req, env); } catch (error) { console.error(error); return json({ success: false, error: "Internal server error" }, 500); } } };
