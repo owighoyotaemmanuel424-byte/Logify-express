@@ -10,6 +10,7 @@ permissions:
 
 env:
   NODE_VERSION: 22
+  WORKER_URL: https://logify-express.emmanuelowighoyota9.workers.dev
 
 concurrency:
   group: cloudflare-production
@@ -18,6 +19,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     environment: production
     steps:
       - name: Checkout
@@ -27,9 +29,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: npm
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --no-audit --no-fund
 
       - name: Validate Cloudflare credentials
         env:
@@ -54,6 +57,7 @@ jobs:
   "main": "./worker/index.ts",
   "compatibility_date": "2026-08-13",
   "assets": {
+    "directory": "./dist",
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*"]
   },
@@ -67,6 +71,9 @@ jobs:
 }
 EOF
 
+      - name: Type check
+        run: npm run typecheck
+
       - name: Build application
         run: npm run build
 
@@ -79,10 +86,17 @@ EOF
           npx wrangler d1 migrations apply logify-logs --remote
           npx wrangler deploy
 
-      - name: Verify production endpoint
+      - name: Verify production homepage
         run: |
-          set -e
+          set -euo pipefail
           curl --fail --silent --show-error --retry 5 --retry-delay 5 \
-            https://logify-express.emmanuelowighoyota9.workers.dev/ \
-            -o /dev/null
+            "$WORKER_URL/" -o /dev/null
           echo "Production Worker is responding."
+
+      - name: Verify protected logs endpoint
+        run: |
+          set -euo pipefail
+          status="$(curl --silent --show-error --retry 3 --retry-delay 2 \
+            -o /dev/null -w '%{http_code}' "$WORKER_URL/api/logs")"
+          test "$status" = "401" || { echo "Expected /api/logs without credentials to return 401, got $status"; exit 1; }
+          echo "Protected logs endpoint is enforcing authentication."
