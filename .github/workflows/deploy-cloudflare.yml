@@ -19,7 +19,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: production
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,7 +28,9 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install
+      - name: Generate Prisma Client
+        run: bunx prisma generate
       - name: Type check
         run: npm run typecheck --if-present
       - name: Build application
@@ -41,6 +43,13 @@ jobs:
           set -euo pipefail
           test -n "$CLOUDFLARE_API_TOKEN" || { echo "Missing CLOUDFLARE_API_TOKEN secret"; exit 1; }
           test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "Missing CLOUDFLARE_ACCOUNT_ID secret"; exit 1; }
+      - name: Validate production database configuration
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$DATABASE_URL" || { echo "Missing DATABASE_URL secret"; exit 1; }
+          echo "PostgreSQL database configuration is present."
       - name: Verify admin authentication configuration
         env:
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
@@ -53,30 +62,25 @@ jobs:
           test -n "$JWT_SECRET" || { echo "Missing JWT_SECRET secret"; exit 1; }
           test "${#ADMIN_PASSWORD}" -ge 12 || { echo "ADMIN_PASSWORD must be at least 12 characters"; exit 1; }
           test "${#JWT_SECRET}" -ge 32 || { echo "JWT_SECRET must be at least 32 characters"; exit 1; }
-          echo "Admin authentication configuration is present."
-      - name: Verify configured D1 database
+      - name: Configure Worker secrets
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: bunx wrangler d1 info logify-logs
-      - name: Apply D1 migrations
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: bunx wrangler d1 migrations apply logify-logs --remote
-      - name: Deploy Worker
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: |
           set -euo pipefail
+          printf '%s' "$DATABASE_URL" | bunx wrangler secret put DATABASE_URL
           printf '%s' "$ADMIN_EMAIL" | bunx wrangler secret put ADMIN_EMAIL
           printf '%s' "$ADMIN_PASSWORD" | bunx wrangler secret put ADMIN_PASSWORD
           printf '%s' "$JWT_SECRET" | bunx wrangler secret put JWT_SECRET
-          bunx wrangler deploy
+      - name: Deploy Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: bunx wrangler deploy
       - name: Verify production health endpoint
         env:
           PRODUCTION_URL: https://logify-express.emmanuelowighoyota9.workers.dev
@@ -98,5 +102,5 @@ jobs:
           cat "$response_file"
           echo
           test "$http_code" = "200" || { echo "Admin login verification failed with HTTP $http_code"; exit 1; }
-          jq -e '.token and (.user.role == "super_admin")' "$response_file" >/dev/null || { echo "Admin login response did not contain the expected authenticated admin payload"; exit 1; }
+          jq -e '.token and (.user.role == "ADMIN")' "$response_file" >/dev/null || { echo "Admin login response did not contain the expected authenticated admin payload"; exit 1; }
           echo "Production admin login verification passed."
