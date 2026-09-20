@@ -1,70 +1,21 @@
 generator client {
-  provider   = "prisma-client-js"
-  engineType = "client"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-enum UserRole {
-  SUPER_ADMIN
-  ADMIN
-  USER
-  DRIVER
-}
-
-enum UserStatus {
-  ACTIVE
-  SUSPENDED
-}
-
-enum ShipmentType {
-  FREIGHT
-  EXPRESS
-  STANDARD
-  DOCUMENT
-  FRAGILE
-}
-
-enum ShipmentStatus {
-  PENDING
-  PICKED_UP
-  IN_TRANSIT
-  OUT_FOR_DELIVERY
-  DELIVERED
-  CANCELLED
-}
-
-enum DriverStatus {
-  AVAILABLE
-  ON_DELIVERY
-  OFFLINE
-}
-
-enum PaymentStatus {
-  PAID
-  PENDING
-  FAILED
-}
-
-enum PaymentMethod {
-  CARD
-  STRIPE
-  PAYSTACK
-  BANK_TRANSFER
-}
-
-enum AlertType {
-  EMAIL
-  SMS
-}
-
-enum ChatStatus {
-  OPEN
-  PENDING
-  CLOSED
-}
+enum UserRole { SUPER_ADMIN ADMIN USER DRIVER }
+enum UserStatus { ACTIVE SUSPENDED }
+enum ShipmentType { FREIGHT EXPRESS STANDARD DOCUMENT FRAGILE }
+enum ShipmentStatus { PENDING PICKED_UP IN_TRANSIT OUT_FOR_DELIVERY DELIVERED CANCELLED }
+enum DriverStatus { AVAILABLE ON_DELIVERY OFFLINE }
+enum PaymentStatus { PAID PENDING FAILED }
+enum PaymentMethod { CARD STRIPE PAYSTACK BANK_TRANSFER }
+enum AlertType { EMAIL SMS }
+enum ChatStatus { OPEN PENDING CLOSED }
 
 model User {
   id           String     @id
@@ -82,24 +33,24 @@ model User {
 }
 
 model Driver {
-  id           String       @id
-  user         User         @relation(fields: [id], references: [id], onDelete: Cascade)
+  id           String      @id
+  user         User        @relation(fields: [id], references: [id], onDelete: Cascade)
   name         String
   phone        String?
   vehicleType  String?
   vehiclePlate String?
-  status       DriverStatus  @default(AVAILABLE)
+  status       DriverStatus @default(AVAILABLE)
   lat          Float?
   lng          Float?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  shipments    Shipment[]    @relation("AssignedDriver")
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  shipments    Shipment[]   @relation("AssignedDriver")
 }
 
 model Shipment {
-  id                String         @id
+  id                String                 @id
   senderId          String?
-  sender            User?          @relation("ShipmentSender", fields: [senderId], references: [id], onDelete: SetNull)
+  sender            User?                  @relation("ShipmentSender", fields: [senderId], references: [id], onDelete: SetNull)
   senderName        String
   senderEmail       String
   senderPhone       String
@@ -115,16 +66,16 @@ model Shipment {
   currentLat        Float?
   currentLng        Float?
   weight            Float
-  type              ShipmentType   @default(STANDARD)
-  packageValue      Float           @default(0)
+  type              ShipmentType           @default(STANDARD)
+  packageValue      Float                  @default(0)
   packageDimensions Json?
   pickupDate        DateTime?
-  deliveryType      String          @default("Standard")
-  status            ShipmentStatus  @default(PENDING)
-  price             Float           @default(0)
+  deliveryType      String                 @default("Standard")
+  status            ShipmentStatus         @default(PENDING)
+  price             Float                  @default(0)
   estimatedDelivery DateTime?
   assignedDriverId  String?
-  assignedDriver    Driver?         @relation("AssignedDriver", fields: [assignedDriverId], references: [id], onDelete: SetNull)
+  assignedDriver    Driver?                @relation("AssignedDriver", fields: [assignedDriverId], references: [id], onDelete: SetNull)
   location          String?
   tag               String?
   description       String?
@@ -133,8 +84,8 @@ model Shipment {
   labelDocName      String?
   labelDocData      String?
   proofOfDelivery   String?
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
   timeline          TimelineEvent[]
   subscribers       ShipmentSubscriber[]
   payments          Payment[]
@@ -154,7 +105,6 @@ model TimelineEvent {
   location    String?
   description String
   createdAt   DateTime @default(now())
-
   @@index([shipmentId, timestamp])
 }
 
@@ -164,7 +114,6 @@ model ShipmentSubscriber {
   shipment   Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
   email      String
   createdAt  DateTime @default(now())
-
   @@unique([shipmentId, email])
 }
 
@@ -178,7 +127,6 @@ model Payment {
   method     PaymentMethod?
   timestamp  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
-
   @@index([shipmentId])
   @@index([timestamp])
 }
@@ -209,7 +157,6 @@ model Quote {
   distanceKm   Float
   price        Float
   createdAt    DateTime @default(now())
-
   @@index([createdAt])
 }
 
@@ -229,7 +176,6 @@ model ChatMessage {
   text           String
   fileAttachment String?
   createdAt      DateTime         @default(now())
-
   @@index([conversationId, createdAt])
 }
 
@@ -241,7 +187,6 @@ model AuditLog {
   entityId  String?
   metadata  Json?
   createdAt DateTime @default(now())
-
   @@index([actorId, createdAt])
   @@index([entity, entityId])
 }
