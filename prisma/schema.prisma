@@ -1,0 +1,247 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  USER
+  DRIVER
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum ShipmentType {
+  FREIGHT
+  EXPRESS
+  STANDARD
+  DOCUMENT
+  FRAGILE
+}
+
+enum ShipmentStatus {
+  PENDING
+  PICKED_UP
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum DriverStatus {
+  AVAILABLE
+  ON_DELIVERY
+  OFFLINE
+}
+
+enum PaymentStatus {
+  PAID
+  PENDING
+  FAILED
+}
+
+enum PaymentMethod {
+  CARD
+  STRIPE
+  PAYSTACK
+  BANK_TRANSFER
+}
+
+enum AlertType {
+  EMAIL
+  SMS
+}
+
+enum ChatStatus {
+  OPEN
+  PENDING
+  CLOSED
+}
+
+model User {
+  id           String     @id
+  email        String     @unique
+  name         String
+  role         UserRole   @default(USER)
+  status       UserStatus @default(ACTIVE)
+  phone        String?
+  passwordHash String
+  salt         String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  shipments    Shipment[] @relation("ShipmentSender")
+  driver       Driver?
+}
+
+model Driver {
+  id           String       @id
+  user         User         @relation(fields: [id], references: [id], onDelete: Cascade)
+  name         String
+  phone        String?
+  vehicleType  String?
+  vehiclePlate String?
+  status       DriverStatus  @default(AVAILABLE)
+  lat          Float?
+  lng          Float?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  shipments    Shipment[]    @relation("AssignedDriver")
+}
+
+model Shipment {
+  id                String         @id
+  senderId          String?
+  sender            User?          @relation("ShipmentSender", fields: [senderId], references: [id], onDelete: SetNull)
+  senderName        String
+  senderEmail       String
+  senderPhone       String
+  receiverName      String
+  receiverEmail     String?
+  receiverPhone     String?
+  pickupAddress     String
+  deliveryAddress   String
+  pickupLat         Float?
+  pickupLng         Float?
+  deliveryLat       Float?
+  deliveryLng       Float?
+  currentLat        Float?
+  currentLng        Float?
+  weight            Float
+  type              ShipmentType   @default(STANDARD)
+  packageValue      Float           @default(0)
+  packageDimensions Json?
+  pickupDate        DateTime?
+  deliveryType      String          @default("Standard")
+  status            ShipmentStatus  @default(PENDING)
+  price             Float           @default(0)
+  estimatedDelivery DateTime?
+  assignedDriverId  String?
+  assignedDriver    Driver?         @relation("AssignedDriver", fields: [assignedDriverId], references: [id], onDelete: SetNull)
+  location          String?
+  tag               String?
+  description       String?
+  invoiceDocName    String?
+  invoiceDocData    String?
+  labelDocName      String?
+  labelDocData      String?
+  proofOfDelivery   String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  timeline          TimelineEvent[]
+  subscribers       ShipmentSubscriber[]
+  payments          Payment[]
+
+  @@index([status])
+  @@index([senderId])
+  @@index([assignedDriverId])
+  @@index([createdAt])
+}
+
+model TimelineEvent {
+  id          String   @id @default(cuid())
+  shipmentId  String
+  shipment    Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  status      String
+  timestamp   DateTime @default(now())
+  location    String?
+  description String
+  createdAt   DateTime @default(now())
+
+  @@index([shipmentId, timestamp])
+}
+
+model ShipmentSubscriber {
+  id         String   @id @default(cuid())
+  shipmentId String
+  shipment   Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  email      String
+  createdAt  DateTime @default(now())
+
+  @@unique([shipmentId, email])
+}
+
+model Payment {
+  id         String        @id
+  shipmentId String
+  shipment   Shipment      @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  amount     Float
+  currency   String        @default("USD")
+  status     PaymentStatus @default(PENDING)
+  method     PaymentMethod?
+  timestamp  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([shipmentId])
+  @@index([timestamp])
+}
+
+model Alert {
+  id         String    @id
+  type       AlertType
+  recipient  String
+  title      String
+  body       String
+  timestamp  DateTime  @default(now())
+  readAt     DateTime?
+}
+
+model Setting {
+  id        Int      @id @default(1)
+  data      Json
+  updatedAt DateTime @updatedAt
+}
+
+model Quote {
+  id           String   @id
+  pickup       String
+  delivery     String
+  weight       Float
+  type         String   @default("Standard")
+  deliveryType String   @default("Standard")
+  distanceKm   Float
+  price        Float
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model ChatConversation {
+  id        String        @id
+  status    ChatStatus    @default(OPEN)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  messages  ChatMessage[]
+}
+
+model ChatMessage {
+  id             String           @id
+  conversationId String
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         String
+  text           String
+  fileAttachment String?
+  createdAt      DateTime         @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([entity, entityId])
+}
