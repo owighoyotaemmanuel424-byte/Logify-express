@@ -40,6 +40,20 @@ export default function AdminShipmentsView({
   const [editLocation, setEditLocation] = useState<string>('');
   const [editDescription, setEditDescription] = useState<string>('');
   const [editTag, setEditTag] = useState<string>('');
+  const [editSenderName, setEditSenderName] = useState('');
+  const [editSenderEmail, setEditSenderEmail] = useState('');
+  const [editSenderPhone, setEditSenderPhone] = useState('');
+  const [editReceiverName, setEditReceiverName] = useState('');
+  const [editReceiverEmail, setEditReceiverEmail] = useState('');
+  const [editReceiverPhone, setEditReceiverPhone] = useState('');
+  const [editPickupAddress, setEditPickupAddress] = useState('');
+  const [editDeliveryAddress, setEditDeliveryAddress] = useState('');
+  const [editWeight, setEditWeight] = useState('');
+  const [editType, setEditType] = useState('STANDARD');
+  const [editPrice, setEditPrice] = useState('');
+  const [editPackageValue, setEditPackageValue] = useState('');
+  const [editDeliveryType, setEditDeliveryType] = useState('Standard');
+  const [editEstimatedDelivery, setEditEstimatedDelivery] = useState('');
   const [editError, setEditError] = useState<string | null>(null);
   const [editLoading, setEditLoading] = useState(false);
 
@@ -133,11 +147,26 @@ export default function AdminShipmentsView({
           location: editLocation,
           description: editDescription,
           tag: editTag || null,
+          senderName: editSenderName,
+          senderEmail: editSenderEmail,
+          senderPhone: editSenderPhone,
+          receiverName: editReceiverName,
+          receiverEmail: editReceiverEmail,
+          receiverPhone: editReceiverPhone,
+          pickupAddress: editPickupAddress,
+          deliveryAddress: editDeliveryAddress,
+          weight: Number(editWeight),
+          type: editType,
+          price: Number(editPrice),
+          packageValue: Number(editPackageValue || 0),
+          deliveryType: editDeliveryType,
+          estimatedDelivery: editEstimatedDelivery ? new Date(editEstimatedDelivery).toISOString() : null,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update cargo dispatch milestones.');
+        const result = await response.json().catch(() => ({}));
+        throw new Error(result.error || 'Failed to update shipment details.');
       }
 
       setEditingShipment(null);
@@ -209,6 +238,39 @@ export default function AdminShipmentsView({
                     <option value="Delivered">Delivered</option>
                     <option value="Cancelled">Cancelled</option>
                   </select>
+                </div>
+              </div>
+
+              {/* Editable shipment and customer details */}
+              <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <h4 className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-mono">Sender & Recipient</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <label className="space-y-1 block"><span className="text-[10px] text-slate-400 font-bold uppercase">Sender name</span><input required maxLength={120} value={editSenderName} onChange={e => setEditSenderName(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-950 dark:text-white" /></label>
+                  <label className="space-y-1 block"><span className="text-[10px] text-slate-400 font-bold uppercase">Sender email</span><input required type="email" maxLength={320} value={editSenderEmail} onChange={e => setEditSenderEmail(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-950 dark:text-white" /></label>
+                  <label className="space-y-1 block"><span className="text-[10px] text-slate-400 font-bold uppercase">Sender phone</span><input required maxLength={40} value={editSenderPhone} onChange={e => setEditSenderPhone(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-950 dark:text-white" /></label>
+                  <label className="space-y-1 block"><span className="text-[10px] text-slate-400 font-bold uppercase">Recipient name</span><input required maxLength={120} value={editReceiverName} onChange={e => setEditReceiverName(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-950 dark:text-white" /></label>
+                  <label className="space-y-1 block"><span className="text-[10px] text-slate-400 font-bold uppercase">Recipient email</span><input type="email" maxLength={320} value={editReceiverEmail} onChange={e => setEditReceiverEmail(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-950 dark:text-white" /></label>
+                  <label className="space-y-1 block"><span className="text-[10px] text-slate-400 font-bold uppercase">Recipient phone</span><input maxLength={40} value={editReceiverPhone} onChange={e => setEditReceiverPhone(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-950 dark:text-white" /></label>
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <h4 className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Pickup & delivery addresses</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <label className="space-y-1 block"><span className="text-[10px] text-slate-400 font-bold uppercase">Pickup address</span><textarea required maxLength={500} rows={2} value={editPickupAddress} onChange={e => setEditPickupAddress(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-950 dark:text-white" /></label>
+                  <label className="space-y-1 block"><span className="text-[10px] text-slate-400 font-bold uppercase">Delivery address</span><textarea required maxLength={500} rows={2} value={editDeliveryAddress} onChange={e => setEditDeliveryAddress(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-950 dark:text-white" /></label>
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <h4 className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Package & delivery settings</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <label className="space-y-1 block"><span className="text-[10px] text-slate-400 font-bold uppercase">Package type</span><select value={editType} onChange={e => setEditType(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-950 dark:text-white"><option value="STANDARD">Standard</option><option value="EXPRESS">Express</option><option value="FREIGHT">Freight</option><option value="DOCUMENT">Document</option><option value="FRAGILE">Fragile</option></select></label>
+                  <label className="space-y-1 block"><span className="text-[10px] text-slate-400 font-bold uppercase">Delivery service</span><input maxLength={50} value={editDeliveryType} onChange={e => setEditDeliveryType(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-950 dark:text-white" /></label>
+                  <label className="space-y-1 block"><span className="text-[10px] text-slate-400 font-bold uppercase">Weight (kg)</span><input required type="number" min="0.01" step="0.01" value={editWeight} onChange={e => setEditWeight(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-950 dark:text-white" /></label>
+                  <label className="space-y-1 block"><span className="text-[10px] text-slate-400 font-bold uppercase">Shipment price</span><input required type="number" min="0" step="0.01" value={editPrice} onChange={e => setEditPrice(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-950 dark:text-white" /></label>
+                  <label className="space-y-1 block"><span className="text-[10px] text-slate-400 font-bold uppercase">Declared package value</span><input type="number" min="0" step="0.01" value={editPackageValue} onChange={e => setEditPackageValue(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-950 dark:text-white" /></label>
+                  <label className="space-y-1 block"><span className="text-[10px] text-slate-400 font-bold uppercase">Estimated delivery</span><input type="datetime-local" value={editEstimatedDelivery} onChange={e => setEditEstimatedDelivery(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-950 dark:text-white" /></label>
                 </div>
               </div>
 
@@ -543,6 +605,22 @@ export default function AdminShipmentsView({
                         setEditStatus(s.status);
                         setEditDriverId(s.assignedDriverId || '');
                         setEditTag(s.tag || '');
+                        setEditSenderName(s.senderName || '');
+                        setEditSenderEmail(s.senderEmail || '');
+                        setEditSenderPhone(s.senderPhone || '');
+                        setEditReceiverName(s.receiverName || '');
+                        setEditReceiverEmail(s.receiverEmail || '');
+                        setEditReceiverPhone(s.receiverPhone || '');
+                        setEditPickupAddress(s.pickupAddress || '');
+                        setEditDeliveryAddress(s.deliveryAddress || '');
+                        setEditWeight(String(s.weight ?? ''));
+                        setEditType(String(s.type || 'STANDARD').toUpperCase());
+                        setEditPrice(String(s.price ?? 0));
+                        setEditPackageValue(String(s.packageValue ?? 0));
+                        setEditDeliveryType(s.deliveryType || 'Standard');
+                        setEditEstimatedDelivery(s.estimatedDelivery ? new Date(s.estimatedDelivery).toISOString().slice(0, 16) : '');
+                        setEditLocation((s as any).location || '');
+                        setEditDescription((s as any).description || '');
                       }}
                       className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-[10px] transition-all cursor-pointer"
                     >
