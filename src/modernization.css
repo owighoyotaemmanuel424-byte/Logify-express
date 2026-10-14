@@ -257,3 +257,78 @@ body { font-feature-settings: "ss01" on; }
   background-color: #ff4800 !important;
   color: #fff !important;
 }
+
+
+/* Site-wide monochrome mode: pure black surfaces and white text everywhere.
+   Intentionally overrides component utility colors, gradients, and accent buttons. */
+#root,
+#root *,
+#root *::before,
+#root *::after {
+  color: #fff !important;
+  border-color: #292929 !important;
+  box-shadow: none !important;
+}
+#root,
+#root main,
+#root header,
+#root footer,
+#root nav,
+#root aside,
+#root section,
+#root article,
+#root form,
+#root [class*="bg-"],
+#root [class*="surface"],
+#root [class*="card"],
+#root [class*="panel"],
+#root [class*="modal"],
+#root [class*="dialog"],
+#root [role="dialog"],
+#root [role="menu"],
+#root [role="menuitem"],
+#root [role="tablist"],
+#root [role="tab"],
+#root [role="alert"],
+#root [role="status"],
+#root table,
+#root thead,
+#root tbody,
+#root tr,
+#root th,
+#root td,
+#root input,
+#root select,
+#root textarea,
+#root button,
+#root a,
+#root label {
+  background-color: #000 !important;
+  background-image: none !important;
+}
+#root :is(input,select,textarea) {
+  color: #fff !important;
+  caret-color: #fff;
+  border: 1px solid #383838 !important;
+}
+#root :is(input,select,textarea)::placeholder { color: #aaa !important; opacity: 1; }
+#root :is(button,a) {
+  color: #fff !important;
+  border-color: #383838 !important;
+}
+#root :is(button,a):hover {
+  background-color: #151515 !important;
+  color: #fff !important;
+}
+#root :is(button,a):is([aria-current="page"],[aria-selected="true"],.active,.admin-active-nav) {
+  background-color: #202020 !important;
+  color: #fff !important;
+  border-color: #fff !important;
+}
+#root :is(svg,[class*="icon"]) { color: #fff !important; }
+#root [class*="text-"] { color: #fff !important; }
+#root [class*="border"] { border-color: #292929 !important; }
+#root :is(.hero-premium__masthead, .premium-navbar, .admin-control-tower) {
+  background: #000 !important;
+  color: #fff !important;
+}
