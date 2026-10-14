@@ -185,7 +185,7 @@ export default function AdminShipmentsView({
       {/* Shipment edit dispatcher side overlay or modal */}
       {editingShipment && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative space-y-6">
+          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-5 sm:p-8 shadow-2xl relative space-y-6">
             <button
               onClick={() => setEditingShipment(null)}
               className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
@@ -617,7 +617,7 @@ export default function AdminShipmentsView({
                         setEditType(String(s.type || 'STANDARD').toUpperCase());
                         setEditPrice(String(s.price ?? 0));
                         setEditPackageValue(String(s.packageValue ?? 0));
-                        setEditDeliveryType(s.deliveryType || 'Standard');
+                        setEditDeliveryType((s as any).deliveryType || 'Standard');
                         setEditEstimatedDelivery(s.estimatedDelivery ? new Date(s.estimatedDelivery).toISOString().slice(0, 16) : '');
                         setEditLocation((s as any).location || '');
                         setEditDescription((s as any).description || '');
