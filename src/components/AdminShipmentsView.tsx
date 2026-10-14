@@ -4,6 +4,20 @@ import { Shipment, Driver, Settings } from '../types.js';
 import { motion, AnimatePresence } from 'motion/react';
 import { generateInvoicePDF } from '../utils/pdfGenerator.js';
 
+const normalizeShipmentStatus = (value: unknown): string => {
+  const raw = String(value ?? '').trim().toUpperCase().replace(/[\\s-]+/g, '_');
+  const labels: Record<string, string> = {
+    PENDING: 'Pending',
+    PICKED_UP: 'Picked Up',
+    IN_TRANSIT: 'In Transit',
+    OUT_FOR_DELIVERY: 'Out for Delivery',
+    DELIVERED: 'Delivered',
+    CANCELLED: 'Cancelled',
+    EXCEPTION: 'Exception',
+  };
+  return labels[raw] || String(value ?? 'Pending');
+};
+
 interface AdminShipmentsViewProps {
   shipments: Shipment[];
   drivers: Driver[];
@@ -59,7 +73,7 @@ export default function AdminShipmentsView({
 
   // Filtered lists
   const filtered = shipments.filter(s => {
-    if (filterStatus !== 'All' && s.status !== filterStatus) return false;
+    if (filterStatus !== 'All' && normalizeShipmentStatus(s.status) !== filterStatus) return false;
     if (filterDate) {
       const createdDate = s.createdAt.substring(0, 10);
       if (createdDate !== filterDate) return false;
@@ -602,7 +616,7 @@ export default function AdminShipmentsView({
                     <button
                       onClick={() => {
                         setEditingShipment(s);
-                        setEditStatus(s.status);
+                        setEditStatus(normalizeShipmentStatus(s.status));
                         setEditDriverId(s.assignedDriverId || '');
                         setEditTag(s.tag || '');
                         setEditSenderName(s.senderName || '');
