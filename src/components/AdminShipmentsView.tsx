@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { generateInvoicePDF } from '../utils/pdfGenerator.js';
 
 const normalizeShipmentStatus = (value: unknown): string => {
-  const raw = String(value ?? '').trim().toUpperCase().replace(/[\\s-]+/g, '_');
+  const raw = String(value ?? '').trim().toUpperCase().replace(/[\s-]+/g, '_');
   const labels: Record<string, string> = {
     PENDING: 'Pending',
     PICKED_UP: 'Picked Up',
