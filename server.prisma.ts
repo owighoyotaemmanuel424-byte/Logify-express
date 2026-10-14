@@ -329,8 +329,23 @@ app.put("/api/shipments/:id", ...adminOnly, asyncRoute(async (req: AuthedRequest
         description: normalizeString(event.description, 1000),
         timestamp: event.timestamp ? new Date(event.timestamp) : new Date()
       })) });
-    } else if (data.status && data.status !== existing.status) {
-      await tx.timelineEvent.create({ data: { shipmentId: existing.id, status: data.status, location: data.location ?? existing.location, description: "Shipment status updated to " + data.status, timestamp: new Date() } });
+    } else {
+      const statusChanged = data.status !== undefined && data.status !== existing.status;
+      const milestoneDetailsChanged = Object.prototype.hasOwnProperty.call(b, "description") || Object.prototype.hasOwnProperty.call(b, "location");
+      if (statusChanged || milestoneDetailsChanged) {
+        const eventStatus = data.status ?? existing.status;
+        const eventLocation = Object.prototype.hasOwnProperty.call(data, "location") ? data.location : existing.location;
+        const eventDescription = normalizeString(b.description, 1000) || (statusChanged
+          ? "Shipment status updated to " + eventStatus
+          : "Shipment tracking details updated.");
+        await tx.timelineEvent.create({ data: {
+          shipmentId: existing.id,
+          status: eventStatus,
+          location: eventLocation || null,
+          description: eventDescription,
+          timestamp: new Date()
+        } });
+      }
     }
     return tx.shipment.findUnique({ where: { id: existing.id }, include: { timeline: { orderBy: { timestamp: "asc" } }, assignedDriver: true, payments: true } });
   });
