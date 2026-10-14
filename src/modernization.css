@@ -213,3 +213,47 @@ body { font-feature-settings: "ss01" on; }
     transition-duration: .01ms !important;
   }
 }
+
+
+/* Pure-black admin theme requested for the control tower. */
+#root .admin-control-tower,
+#root .admin-control-tower main,
+#root .admin-control-tower aside,
+#root .admin-control-tower [class*="bg-white"],
+#root .admin-control-tower [class*="bg-gray-50"],
+#root .admin-control-tower [class*="bg-gray-100"],
+#root .admin-control-tower [class*="bg-slate-50"],
+#root .admin-control-tower [class*="bg-slate-100"] {
+  background-color: #000 !important;
+  color: #f5f5f5;
+}
+#root .admin-control-tower header {
+  background: rgba(0,0,0,.94) !important;
+  color: #fff !important;
+  border-bottom: 1px solid #242424;
+}
+#root .admin-control-tower :is(h1,h2,h3,h4,h5,h6,p,span,label,th,td,small,strong,li) {
+  color: inherit;
+}
+#root .admin-control-tower :is([class*="border"],hr) {
+  border-color: #292929 !important;
+}
+#root .admin-control-tower :is(input,select,textarea) {
+  background-color: #080808 !important;
+  color: #fff !important;
+  border-color: #333 !important;
+}
+#root .admin-control-tower :is(input,select,textarea)::placeholder { color: #888; }
+#root .admin-control-tower button:not([class*="bg-blue-600"]):not(.admin-active-nav) {
+  color: #f5f5f5;
+}
+#root .admin-control-tower tr:hover { background-color: #101010 !important; }
+#root .admin-control-tower [class*="text-gray-"],
+#root .admin-control-tower [class*="text-slate-"] { color: #aaa !important; }
+#root .admin-control-tower [class*="shadow"] { box-shadow: 0 5px 22px rgba(0,0,0,.45) !important; }
+#root .admin-control-tower .admin-active-nav,
+#root .admin-control-tower button[class*="bg-blue-600"],
+#root .admin-control-tower button[class*="bg-emerald-600"] {
+  background-color: #ff4800 !important;
+  color: #fff !important;
+}
