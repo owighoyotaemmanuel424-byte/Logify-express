@@ -128,7 +128,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
   const [simHeading, setSimHeading] = useState('N/A');
   const [simDistance, setSimDistance] = useState(0);
   const [simLogs, setSimLogs] = useState<string[]>([]);
-  const [isAutoPolling, setIsAutoPolling] = useState(false);
+  const isAutoPolling = true; // Database-backed shipment updates are always enabled while tracking.
   const [simulatedCoords, setSimulatedCoords] = useState<Coordinates | null>(null);
   const [mapMode, setMapMode] = useState<'vector' | 'satellite'>('vector');
 
@@ -364,29 +364,46 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
     return () => clearInterval(interval);
   }, [shipment, isSimulating, simulatedCoords, simSpeed]);
 
-  // Auto-polling database sync effect
+  // Keep the public tracking page synchronized with admin changes.
+  // Polling is automatic, and a focused/visible tab refreshes immediately.
   useEffect(() => {
-    if (!isAutoPolling || !shipment) return;
+    if (!shipment?.id) return;
 
-    const interval = setInterval(async () => {
+    const trackingId = shipment.id.trim().toUpperCase();
+    let active = true;
+    let requestInFlight = false;
+
+    const refreshFromServer = async () => {
+      if (!active || requestInFlight) return;
+      requestInFlight = true;
       try {
-        const response = await fetch(`/api/track/${shipment.id.trim().toUpperCase()}`);
-        if (response.ok) {
-          const data = await response.json();
-          setShipment(normalizeTrackingShipment(data));
-          
-          setSimLogs((prev) => [
-            ...prev,
-            `[${new Date().toLocaleTimeString()}] 🔄 Refreshed shipment tracking view.`
-          ]);
-        }
+        const response = await fetch(`/api/track/${trackingId}`, { cache: 'no-store' });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (active) setShipment(normalizeTrackingShipment(data));
       } catch (err) {
-        console.error('Error auto-polling shipment:', err);
+        console.error('Error syncing shipment tracking:', err);
+      } finally {
+        requestInFlight = false;
       }
-    }, 8000);
+    };
 
-    return () => clearInterval(interval);
-  }, [isAutoPolling, shipment]);
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') void refreshFromServer();
+    };
+
+    const interval = window.setInterval(() => void refreshFromServer(), 5000);
+    window.addEventListener('focus', refreshWhenVisible);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    void refreshFromServer();
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      window.removeEventListener('focus', refreshWhenVisible);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
+  }, [shipment?.id]);
 
   const handleRefresh = async () => {
     if (!shipment) return;
@@ -395,7 +412,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
       const response = await fetch(`/api/track/${shipment.id.trim().toUpperCase()}`);
       if (response.ok) {
         const data = await response.json();
-        setShipment(data);
+        setShipment(normalizeTrackingShipment(data));
       }
     } catch (err) {
       console.error('Error refreshing shipment data:', err);
@@ -434,7 +451,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
         throw new Error('Tracking ID not recognized. Please check the reference and try again.');
       }
       const data = await response.json();
-      setShipment(data);
+      setShipment(normalizeTrackingShipment(data));
     } catch (err: any) {
       setShipment(null);
       setError(err.message || 'Server error tracking shipment.');
@@ -1210,34 +1227,16 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                 </h3>
 
                 <div className="flex items-center gap-2 flex-wrap">
-                  {/* Auto-Poll Toggle */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsAutoPolling(!isAutoPolling);
-                      if (!isAutoPolling) {
-                        setIsSimulating(false);
-                      }
-                    }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-mono font-bold uppercase border transition-all cursor-pointer ${
-                      isAutoPolling
-                        ? 'bg-emerald-600 border-emerald-500 text-white'
-                        : 'bg-[#20232e] hover:bg-[#282d3b] border-[#2b303e] text-slate-300'
-                    }`}
-                    title="Toggle auto-refreshing tracking status live from the database"
+                  {/* Tracking synchronization stays on so admin updates always reach customers. */}
+                  <span
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-mono font-bold uppercase border bg-emerald-600 border-emerald-500 text-white"
+                    title="Tracking status refreshes automatically from the database every 5 seconds"
+                    role="status"
+                    aria-live="polite"
                   >
-                    {isAutoPolling ? (
-                      <>
-                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
-                        Live Polling: ACTIVE
-                      </>
-                    ) : (
-                      <>
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
-                        Live Polling: OFF
-                      </>
-                    )}
-                  </button>
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                    Live Sync: ON
+                  </span>
  
                   {/* Simulated Play/Pause Toggle */}
                   {settings?.trackerShowSimulation !== false && (
@@ -1247,9 +1246,6 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                           type="button"
                           onClick={() => {
                             setIsSimulating(!isSimulating);
-                            if (!isSimulating) {
-                              setIsAutoPolling(false);
-                            }
                           }}
                           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-mono font-bold uppercase border transition-all cursor-pointer ${
                             isSimulating
