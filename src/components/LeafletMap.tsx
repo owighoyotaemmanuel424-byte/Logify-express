@@ -1,8 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import React from 'react';
 import { Coordinates } from '../types.js';
-import { Focus, Navigation, Radio, Truck, MapPinned } from 'lucide-react';
+import { ExternalLink, MapPin, Navigation, Truck } from 'lucide-react';
 
 interface LeafletMapProps {
   pickupCoords?: Coordinates;
@@ -13,6 +11,18 @@ interface LeafletMapProps {
   theme?: 'light' | 'dark';
 }
 
+const isValidCoordinate = (point?: Coordinates): point is Coordinates =>
+  Boolean(
+    point &&
+    Number.isFinite(point.lat) &&
+    Number.isFinite(point.lng) &&
+    Math.abs(point.lat) <= 90 &&
+    Math.abs(point.lng) <= 180,
+  );
+
+const coordinateLabel = (point?: Coordinates) =>
+  isValidCoordinate(point) ? `${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}` : 'Location not available';
+
 export default function LeafletMap({
   pickupCoords,
   deliveryCoords,
@@ -21,386 +31,102 @@ export default function LeafletMap({
   driverName,
   theme = 'light',
 }: LeafletMapProps) {
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<L.Map | null>(null);
-  const tileLayerRef = useRef<L.TileLayer | null>(null);
-  const [autoCenter, setAutoCenter] = useState(true);
+  // Use the shipment's stored coordinates only. This map does not fabricate GPS updates.
+  const origin = isValidCoordinate(currentCoords)
+    ? currentCoords
+    : isValidCoordinate(pickupCoords)
+      ? pickupCoords
+      : undefined;
+  const destination = isValidCoordinate(deliveryCoords) ? deliveryCoords : undefined;
 
-  const markersRef = useRef<{
-    pickup?: L.Marker;
-    delivery?: L.Marker;
-    current?: L.Marker;
-    route?: L.Polyline;
-  }>({});
+  const mapsUrl = origin && destination
+    ? `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(`${origin.lat},${origin.lng}`)}&destination=${encodeURIComponent(`${destination.lat},${destination.lng}`)}&travelmode=driving`
+    : destination
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${destination.lat},${destination.lng}`)}`
+      : 'https://www.google.com/maps';
 
-  // 1. Initialize Map Instance Once
-  useEffect(() => {
-    if (!mapContainerRef.current) return;
+  // Google Maps' embeddable directions view keeps the map usable without exposing
+  // a browser API key. The external link opens full Google Maps navigation.
+  const embedUrl = origin && destination
+    ? `https://maps.google.com/maps?output=embed&saddr=${encodeURIComponent(`${origin.lat},${origin.lng}`)}&daddr=${encodeURIComponent(`${destination.lat},${destination.lng}`)}`
+    : destination
+      ? `https://maps.google.com/maps?output=embed&q=${encodeURIComponent(`${destination.lat},${destination.lng}`)}`
+      : origin
+        ? `https://maps.google.com/maps?output=embed&q=${encodeURIComponent(`${origin.lat},${origin.lng}`)}`
+        : null;
 
-    if (!mapRef.current) {
-      // Default center around USA center
-      mapRef.current = L.map(mapContainerRef.current, {
-        zoomControl: false,
-        attributionControl: true,
-      }).setView([37.8, -96], 4);
-
-      // Add zoom control at bottom-right
-      L.control.zoom({
-        position: 'bottomright',
-      }).addTo(mapRef.current);
-    }
-
-    const map = mapRef.current;
-
-    // Recalculate Leaflet dimensions after mobile layout changes, browser
-    // chrome resizing, orientation changes, and delayed font/layout rendering.
-    const resizeTimers = [100, 350, 800].map((delay) =>
-      window.setTimeout(() => map.invalidateSize({ pan: false }), delay),
-    );
-    const container = mapContainerRef.current;
-    const observer = container && typeof ResizeObserver !== 'undefined'
-      ? new ResizeObserver(() => map.invalidateSize({ pan: false, debounceMoveend: true }))
-      : null;
-    if (container && observer) observer.observe(container);
-    window.addEventListener('orientationchange', () => map.invalidateSize({ pan: false }));
-
-    return () => {
-      resizeTimers.forEach(window.clearTimeout);
-      observer?.disconnect();
-    };
-  }, []);
-
-  // Use standard OSM tiles first, then switch providers if tile requests fail.
-  // A provider fallback prevents the tracking map from showing only a blank canvas.
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-
-    if (tileLayerRef.current) {
-      map.removeLayer(tileLayerRef.current);
-      tileLayerRef.current = null;
-    }
-
-    const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
-    const primaryLayer = L.tileLayer(
-      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-      { maxZoom: 19, attribution, referrerPolicy: 'strict-origin-when-cross-origin', keepBuffer: 3, updateWhenIdle: true },
-    );
-    const fallbackLayer = L.tileLayer(
-      'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
-      { subdomains: 'abc', maxZoom: 19, attribution: attribution + ' &copy; HOT', keepBuffer: 4, updateWhenIdle: false },
-    );
-
-    let failedTiles = 0;
-    let loadedTiles = 0;
-    let switched = false;
-    const switchToFallback = () => {
-      if (switched || !mapRef.current) return;
-      switched = true;
-      if (map.hasLayer(primaryLayer)) map.removeLayer(primaryLayer);
-      fallbackLayer.addTo(map);
-      tileLayerRef.current = fallbackLayer;
-    };
-    primaryLayer.on('tileerror', () => {
-      failedTiles += 1;
-      if (failedTiles >= 3 && failedTiles >= loadedTiles) switchToFallback();
-    });
-    primaryLayer.on('tileload', () => { loadedTiles += 1; });
-    primaryLayer.addTo(map);
-    tileLayerRef.current = primaryLayer;
-
-    const fallbackTimer = window.setTimeout(() => {
-      if (loadedTiles === 0 || (failedTiles >= 3 && failedTiles >= loadedTiles)) switchToFallback();
-    }, 4500);
-
-    return () => {
-      window.clearTimeout(fallbackTimer);
-      primaryLayer.off();
-      fallbackLayer.off();
-      if (map.hasLayer(primaryLayer)) map.removeLayer(primaryLayer);
-      if (map.hasLayer(fallbackLayer)) map.removeLayer(fallbackLayer);
-      if (tileLayerRef.current === primaryLayer || tileLayerRef.current === fallbackLayer) {
-        tileLayerRef.current = null;
-      }
-    };
-  }, [theme]);
-
-  // 2. Setup Static Routes & Markers
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-
-    // Clean up existing static markers to prepare for updates if coordinates change
-    if (markersRef.current.pickup) {
-      map.removeLayer(markersRef.current.pickup);
-      markersRef.current.pickup = undefined;
-    }
-    if (markersRef.current.delivery) {
-      map.removeLayer(markersRef.current.delivery);
-      markersRef.current.delivery = undefined;
-    }
-    if (markersRef.current.route) {
-      map.removeLayer(markersRef.current.route);
-      markersRef.current.route = undefined;
-    }
-
-    const bounds: L.LatLngExpression[] = [];
-
-    // Custom SVG HTML icons
-    const pickupIcon = L.divIcon({
-      html: `
-        <div class="relative flex items-center justify-center">
-          <div class="absolute w-8 h-8 bg-emerald-500/20 rounded-full animate-ping"></div>
-          <div class="w-5 h-5 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center shadow-lg">
-            <div class="w-1.5 h-1.5 bg-white rounded-full"></div>
-          </div>
-        </div>
-      `,
-      className: '',
-      iconSize: [32, 32],
-      iconAnchor: [16, 16],
-    });
-
-    const deliveryIcon = L.divIcon({
-      html: `
-        <div class="relative flex items-center justify-center">
-          <div class="absolute w-8 h-8 bg-rose-500/20 rounded-full animate-ping"></div>
-          <div class="w-5 h-5 bg-rose-500 rounded-full border-2 border-white flex items-center justify-center shadow-lg">
-            <div class="w-1.5 h-1.5 bg-white rounded-full"></div>
-          </div>
-        </div>
-      `,
-      className: '',
-      iconSize: [32, 32],
-      iconAnchor: [16, 16],
-    });
-
-    // Plot Pickup Location
-    if (pickupCoords) {
-      const pickupLatLng: L.LatLngTuple = [pickupCoords.lat, pickupCoords.lng];
-      markersRef.current.pickup = L.marker(pickupLatLng, { icon: pickupIcon })
-        .bindPopup(`<strong style="color:#0f172a;">Origin Depot</strong><br><span style="font-size:10px;color:#64748b;">Lat: ${pickupCoords.lat.toFixed(4)}, Lng: ${pickupCoords.lng.toFixed(4)}</span>`)
-        .addTo(map);
-      bounds.push(pickupLatLng);
-    }
-
-    // Plot Delivery Destination
-    if (deliveryCoords) {
-      const deliveryLatLng: L.LatLngTuple = [deliveryCoords.lat, deliveryCoords.lng];
-      markersRef.current.delivery = L.marker(deliveryLatLng, { icon: deliveryIcon })
-        .bindPopup(`<strong style="color:#0f172a;">Destination Hub</strong><br><span style="font-size:10px;color:#64748b;">Lat: ${deliveryCoords.lat.toFixed(4)}, Lng: ${deliveryCoords.lng.toFixed(4)}</span>`)
-        .addTo(map);
-      bounds.push(deliveryLatLng);
-    }
-
-    // Draw a temporary direct route; the OSRM road route replaces it when available.
-    if (pickupCoords && deliveryCoords) {
-      const polylinePoints: L.LatLngTuple[] = [
-        [pickupCoords.lat, pickupCoords.lng],
-        [deliveryCoords.lat, deliveryCoords.lng],
-      ];
-      markersRef.current.route = L.polyline(polylinePoints, {
-        color: '#1769e8',
-        weight: 3.5,
-        opacity: 0.85,
-        dashArray: '6, 8',
-      }).addTo(map);
-    }
-
-    // Fit map bounds nicely
-    if (bounds.length > 0) {
-      map.fitBounds(L.latLngBounds(bounds), {
-        padding: [50, 50],
-        maxZoom: 12,
-      });
-    }
-
-    // Double force size recalculation
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 200);
-
-  }, [pickupCoords, deliveryCoords]);
-
-  // Prefer a road-following route from the public OSRM routing service.
-  // Keep the straight-line route above as a graceful fallback if routing is unavailable.
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !pickupCoords || !deliveryCoords) return;
-
-    let cancelled = false;
-    const controller = new AbortController();
-    const routeUrl = `https://router.project-osrm.org/route/v1/driving/${pickupCoords.lng},${pickupCoords.lat};${deliveryCoords.lng},${deliveryCoords.lat}?overview=full&geometries=geojson`;
-
-    fetch(routeUrl, { signal: controller.signal })
-      .then((response) => {
-        if (!response.ok) throw new Error('Routing service unavailable');
-        return response.json();
-      })
-      .then((data) => {
-        const coordinates = data?.routes?.[0]?.geometry?.coordinates;
-        if (cancelled || !Array.isArray(coordinates) || coordinates.length < 2) return;
-
-        const roadPath = coordinates.map(
-          ([lng, lat]: [number, number]): L.LatLngTuple => [lat, lng],
-        );
-        if (markersRef.current.route) map.removeLayer(markersRef.current.route);
-        markersRef.current.route = L.polyline(roadPath, {
-          color: '#1769e8',
-          weight: 4,
-          opacity: 0.9,
-          lineCap: 'round',
-          lineJoin: 'round',
-        }).addTo(map);
-      })
-      .catch((error) => {
-        if (error?.name !== 'AbortError') {
-          console.warn('Road route unavailable; using direct route fallback.', error);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [pickupCoords?.lat, pickupCoords?.lng, deliveryCoords?.lat, deliveryCoords?.lng]);
-
-  // 3. Setup / Update Dynamic Vehicle GPS Marker
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !currentCoords) return;
-
-    const currentLatLng: L.LatLngTuple = [currentCoords.lat, currentCoords.lng];
-
-    const currentIcon = L.divIcon({
-      html: `
-        <div class="relative flex items-center justify-center">
-          <div class="absolute w-12 h-12 bg-blue-500/25 rounded-full animate-ping" style="animation-duration: 2.5s;"></div>
-          <div class="absolute w-8 h-8 bg-blue-500/40 rounded-full animate-pulse"></div>
-          <div class="w-7 h-7 bg-blue-600 rounded-xl border border-white flex items-center justify-center shadow-2xl transform rotate-0 transition-transform duration-500">
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-truck">
-              <rect width="16" height="10" x="2" y="4" rx="2"/>
-              <rect width="16" height="10" x="2" y="14" rx="2"/>
-              <path d="M13 6h3a2 2 0 0 1 2 2v7"/>
-              <circle cx="7.5" cy="18.5" r="2.5"/>
-              <circle cx="16.5" cy="18.5" r="2.5"/>
-            </svg>
-          </div>
-        </div>
-      `,
-      className: '',
-      iconSize: [44, 44],
-      iconAnchor: [22, 22],
-    });
-
-    const isDelivered = status === 'Delivered' || status === 'Cancelled';
-
-    if (isDelivered) {
-      // If delivered, remove dynamic marker from map
-      if (markersRef.current.current) {
-        map.removeLayer(markersRef.current.current);
-        markersRef.current.current = undefined;
-      }
-    } else {
-      // Update position or create
-      if (markersRef.current.current) {
-        markersRef.current.current.setLatLng(currentLatLng);
-      } else {
-        markersRef.current.current = L.marker(currentLatLng, { icon: currentIcon })
-          .bindPopup(`<strong style="color:#1e3a8a;">Logify Active Courier</strong><br><span style="font-size:10px;color:#3b82f6;font-family:monospace;font-weight:bold;">Status: ${status}</span>`)
-          .addTo(map);
-      }
-
-      // Smooth pan to current position if auto-center is active
-      if (autoCenter) {
-        map.panTo(currentLatLng, {
-          animate: true,
-          duration: 0.8,
-        });
-      }
-    }
-
-  }, [currentCoords, status, autoCenter]);
-
-  // Handle Clean up on unmount
-  useEffect(() => {
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-    };
-  }, []);
-
-  const manualRecenter = () => {
-    const map = mapRef.current;
-    if (map && currentCoords) {
-      map.panTo([currentCoords.lat, currentCoords.lng], {
-        animate: true,
-        duration: 1.0,
-      });
-      setAutoCenter(true);
-    }
-  };
+  const panelClass = theme === 'dark'
+    ? 'border-[#2b303e] bg-[#12141a] text-white'
+    : 'border-slate-200 bg-white text-slate-900';
 
   return (
-    <div className="relative isolate flex h-[440px] w-full flex-col overflow-hidden rounded-3xl border border-slate-200 bg-slate-950 shadow-[0_24px_70px_-28px_rgba(15,23,42,0.55)] ring-1 ring-black/5 dark:border-slate-800">
-      {/* Floating tracking status */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-[400] flex items-start justify-between gap-3 p-4 sm:p-5">
-        <div className="pointer-events-auto flex min-w-0 items-center gap-3 rounded-2xl border border-white/15 bg-slate-950/85 px-3.5 py-3 text-white shadow-xl backdrop-blur-xl">
-          <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-400/15 text-emerald-300">
-            <Radio size={17} />
-            <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-slate-950" />
-          </span>
-          <span className="min-w-0">
-            <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">Shipment tracking</span>
-            <span className="mt-0.5 block truncate text-sm font-semibold">Shipment street map</span>
-          </span>
-        </div>
-        <div className="pointer-events-auto flex shrink-0 items-center gap-2 rounded-2xl border border-white/15 bg-slate-950/85 p-1.5 text-white shadow-xl backdrop-blur-xl">
-          <button
-            type="button"
-            onClick={() => setAutoCenter(!autoCenter)}
-            aria-pressed={autoCenter}
-            className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-all ${autoCenter ? 'bg-emerald-400 text-slate-950' : 'text-slate-200 hover:bg-white/10'}`}
-            title="Keep the map centered on the courier"
-          >
-            <Focus size={14} />
-            <span className="hidden sm:inline">{autoCenter ? 'Follow on' : 'Follow off'}</span>
-          </button>
-          {!autoCenter && currentCoords && (
-            <button
-              type="button"
-              onClick={manualRecenter}
-              className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-200 transition-colors hover:bg-white/10"
-              title="Center on the courier"
-            >
-              <Navigation size={14} />
-              <span className="hidden sm:inline">Recenter</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div ref={mapContainerRef} className="z-10 min-h-0 w-full flex-1 bg-slate-900" />
-
-      {/* Clean, high-contrast tracking legend */}
-      <div className="z-20 border-t border-white/10 bg-slate-950 px-4 py-4 text-white sm:px-5">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2.5 text-xs text-slate-300">
-            <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-400 ring-4 ring-emerald-400/10" />Pickup</span>
-            <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-rose-400 ring-4 ring-rose-400/10" />Destination</span>
-            <span className="inline-flex items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded-md bg-blue-500 text-white"><Truck size={12} /></span>Courier</span>
+    <section className={`overflow-hidden rounded-2xl border shadow-xl ${panelClass}`} aria-label="Google Maps shipment tracking">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-current/10 p-4">
+        <div className="flex items-center gap-3">
+          <div className="rounded-xl bg-emerald-500/10 p-2.5 text-emerald-500">
+            <MapPin size={19} />
           </div>
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-300"><MapPinned size={16} /></span>
-            <span className="min-w-0">
-              <span className="block text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-500">Assigned courier</span>
-              <span className="block max-w-[190px] truncate text-xs font-semibold text-white">{driverName || 'Awaiting courier assignment'}</span>
-            </span>
+          <div>
+            <h3 className="text-sm font-black">Google Maps Tracking</h3>
+            <p className="mt-0.5 text-xs opacity-70">Shipment route and destination</p>
           </div>
         </div>
+        <a
+          href={mapsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-3 py-2 text-xs font-bold text-slate-950 transition hover:bg-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+        >
+          <Navigation size={14} />
+          Open in Google Maps
+          <ExternalLink size={12} />
+        </a>
       </div>
-    </div>
+
+      {embedUrl ? (
+        <iframe
+          key={embedUrl}
+          title="Google Maps route from current shipment location to delivery destination"
+          src={embedUrl}
+          className="block h-[320px] w-full border-0 sm:h-[390px] lg:h-[430px]"
+          loading="lazy"
+          allowFullScreen
+          referrerPolicy="no-referrer-when-downgrade"
+        />
+      ) : (
+        <div className="flex min-h-[260px] flex-col items-center justify-center gap-3 p-6 text-center">
+          <MapPin size={28} className="opacity-50" />
+          <p className="text-sm font-bold">Map coordinates are not available yet</p>
+          <p className="max-w-sm text-xs opacity-70">
+            The map will appear when this shipment has valid pickup or delivery coordinates.
+          </p>
+          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-amber-500 underline">
+            Open Google Maps
+          </a>
+        </div>
+      )}
+
+      <div className="grid gap-3 border-t border-current/10 p-4 sm:grid-cols-2">
+        <div className="flex min-w-0 items-start gap-2.5">
+          <div className="mt-0.5 text-sky-500"><Truck size={16} /></div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-wider opacity-60">Current shipment position</p>
+            <p className="mt-1 break-all font-mono text-xs">{coordinateLabel(origin)}</p>
+            {driverName && <p className="mt-1 truncate text-xs opacity-70">Driver: {driverName}</p>}
+          </div>
+        </div>
+        <div className="flex min-w-0 items-start gap-2.5">
+          <div className="mt-0.5 text-rose-500"><MapPin size={16} /></div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-wider opacity-60">Delivery destination</p>
+            <p className="mt-1 break-all font-mono text-xs">{coordinateLabel(destination)}</p>
+            {status && <p className="mt-1 text-xs opacity-70">Status: {status}</p>}
+          </div>
+        </div>
+      </div>
+      <p className="px-4 pb-4 text-[10px] leading-relaxed opacity-60">
+        Route display uses the coordinates saved on the shipment. It is not a live GPS feed unless your tracking system supplies updated coordinates.
+      </p>
+    </section>
   );
 }
