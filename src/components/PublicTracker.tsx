@@ -11,6 +11,28 @@ import LeafletMap from './LeafletMap.tsx';
 import './logify-tracking-premium.css';
 import QrScannerModal from './QrScannerModal.tsx';
 
+const normalizeShipmentStatus = (value: unknown): string => {
+  const raw = String(value ?? '').trim().toUpperCase().replace(/[\\s-]+/g, '_');
+  const labels: Record<string, string> = {
+    PENDING: 'Pending',
+    PICKED_UP: 'Picked Up',
+    IN_TRANSIT: 'In Transit',
+    OUT_FOR_DELIVERY: 'Out for Delivery',
+    DELIVERED: 'Delivered',
+    CANCELLED: 'Cancelled',
+    EXCEPTION: 'Exception',
+  };
+  return labels[raw] || String(value ?? 'Pending');
+};
+
+const normalizeTrackingShipment = (data: any): Shipment => ({
+  ...data,
+  status: normalizeShipmentStatus(data?.status),
+  timeline: Array.isArray(data?.timeline)
+    ? data.timeline.map((event: any) => ({ ...event, status: normalizeShipmentStatus(event?.status) }))
+    : [],
+});
+
 const detectLogisticsPartner = (id: string) => {
   const trimmed = id.trim().toUpperCase();
   if (!trimmed) return null;
@@ -351,7 +373,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
         const response = await fetch(`/api/track/${shipment.id.trim().toUpperCase()}`);
         if (response.ok) {
           const data = await response.json();
-          setShipment(data);
+          setShipment(normalizeTrackingShipment(data));
           
           setSimLogs((prev) => [
             ...prev,
