@@ -12,7 +12,7 @@ import './logify-tracking-premium.css';
 import QrScannerModal from './QrScannerModal.tsx';
 
 const normalizeShipmentStatus = (value: unknown): string => {
-  const raw = String(value ?? '').trim().toUpperCase().replace(/[\\s-]+/g, '_');
+  const raw = String(value ?? '').trim().toUpperCase().replace(/[\s-]+/g, '_');
   const labels: Record<string, string> = {
     PENDING: 'Pending',
     PICKED_UP: 'Picked Up',
