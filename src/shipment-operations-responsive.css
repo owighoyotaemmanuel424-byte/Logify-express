@@ -1,0 +1,87 @@
+/* Logify Express — shipment operations and mobile responsiveness */
+.admin-shipments-premium,
+.admin-shipments-premium * { box-sizing: border-box; }
+.admin-shipments-premium { min-width: 0; }
+.admin-shipments-premium input,
+.admin-shipments-premium select,
+.admin-shipments-premium textarea,
+.admin-tracking-operations input,
+.admin-tracking-operations select,
+.admin-tracking-operations textarea { min-height: 42px; }
+.admin-shipments-premium button,
+.admin-tracking-operations button { touch-action: manipulation; }
+.admin-shipments-premium table { min-width: 980px; }
+.admin-shipments-premium .overflow-x-auto {
+  max-width: 100%;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+.admin-shipments-premium thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  white-space: nowrap;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+.admin-shipments-premium tbody tr { transition: background-color .15s ease, box-shadow .15s ease; }
+.admin-shipments-premium tbody tr:focus-within { box-shadow: inset 3px 0 0 #2563eb; }
+.admin-shipments-premium tbody td { vertical-align: top; }
+.admin-shipments-premium tbody td:last-child > div,
+.admin-shipments-premium tbody td:last-child { white-space: nowrap; }
+.admin-shipments-premium input:focus-visible,
+.admin-shipments-premium select:focus-visible,
+.admin-shipments-premium textarea:focus-visible,
+.admin-shipments-premium button:focus-visible,
+.admin-tracking-operations input:focus-visible,
+.admin-tracking-operations select:focus-visible,
+.admin-tracking-operations textarea:focus-visible,
+.admin-tracking-operations button:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+.admin-shipments-premium input[type="checkbox"] { width: 18px; height: 18px; min-height: 18px; cursor: pointer; }
+.admin-shipments-premium [role="dialog"] { max-height: 92dvh; overflow-y: auto; }
+@media (max-width: 767px) {
+  .admin-shipments-premium { gap: 1rem; }
+  .admin-shipments-premium > .grid { gap: .65rem; }
+  .admin-shipments-premium input:not([type="checkbox"]),
+  .admin-shipments-premium select,
+  .admin-shipments-premium textarea { font-size: 16px; }
+  .admin-shipments-premium .overflow-x-auto { border-top: 1px solid rgba(148,163,184,.18); }
+  .admin-shipments-premium table { min-width: 900px; }
+  .admin-shipments-premium th,
+  .admin-shipments-premium td { padding: 12px; }
+  .admin-shipments-premium .fixed.bottom-6 {
+    bottom: max(12px, env(safe-area-inset-bottom));
+    width: calc(100vw - 24px);
+    max-height: 65dvh;
+    overflow-y: auto;
+    padding: 14px;
+  }
+  .admin-shipments-premium .fixed.bottom-6 > div:last-child {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+  .admin-shipments-premium .fixed.bottom-6 select { grid-column: 1 / -1; width: 100%; }
+  .admin-shipments-premium .fixed.bottom-6 button { min-height: 44px; justify-content: center; }
+  .admin-shipments-premium .fixed.inset-0 { align-items: flex-end; padding: 8px; }
+  .admin-shipments-premium .fixed.inset-0 > div {
+    width: 100%;
+    max-height: calc(100dvh - 16px);
+    overflow-y: auto;
+    border-radius: 22px 22px 12px 12px;
+    padding: 22px 16px;
+    padding-bottom: max(22px, env(safe-area-inset-bottom));
+  }
+  .admin-shipments-premium button { min-height: 38px; }
+  .admin-tracking-operations form { flex-direction: column; }
+  .admin-tracking-operations form button { width: 100%; min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-shipments-premium *,
+  .admin-tracking-operations * { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
