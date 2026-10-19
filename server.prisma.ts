@@ -367,8 +367,10 @@ app.post("/api/shipments", ...staffOnly, asyncRoute(async (req: AuthedRequest, r
 }));
 
 app.patch("/api/shipments/:id/status", ...staffOnly, asyncRoute(async (req: AuthedRequest, res) => {
-  const status = req.body?.status;
-  if (!Object.values(ShipmentStatus).includes(status)) return res.status(400).json({ error: "Invalid shipment status" });
+  const rawStatus = String(req.body?.status ?? "").trim().toUpperCase().replace(/[\\s-]+/g, "_");
+  const statusAliases: Record<string, string> = { PICKEDUP: "PICKED_UP", INTRANSIT: "IN_TRANSIT", OUTFORDELIVERY: "OUT_FOR_DELIVERY", ONHOLD: "ON_HOLD" };
+  const status = statusAliases[rawStatus] || rawStatus;
+  if (!Object.values(ShipmentStatus).includes(status as any)) return res.status(400).json({ error: "Invalid shipment status" });
   const existing = await prisma.shipment.findUnique({ where: { id: req.params.id } });
   if (!existing) return res.status(404).json({ error: "Shipment not found" });
   if (req.auth!.role === UserRole.DRIVER && existing.assignedDriverId !== req.auth!.id) return res.status(403).json({ error: "Forbidden" });
