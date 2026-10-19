@@ -32,6 +32,7 @@ enum ShipmentStatus {
   PICKED_UP
   IN_TRANSIT
   OUT_FOR_DELIVERY
+  ON_HOLD
   DELIVERED
   CANCELLED
 }
