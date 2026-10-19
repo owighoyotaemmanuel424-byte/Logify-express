@@ -324,7 +324,7 @@ export default function AdminTrackingView({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="admin-tracking-operations space-y-6">
       
       {/* Search Tracker Console Header */}
       <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm space-y-5 text-center max-w-2xl mx-auto">
