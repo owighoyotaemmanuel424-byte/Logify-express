@@ -632,7 +632,6 @@ export default function AdminTrackingView({
                         <option value="Out for Delivery">Out for Delivery (Courier Dispatched)</option>
                         <option value="Delivered">Delivered (Completed)</option>
                          <option value="On Hold">On Hold (Temporarily Paused)</option>
-                        <option value="On Hold">On Hold (Temporarily Paused)</option>
                     <option value="Cancelled">Cancelled (Void)</option>
                       </select>
                     </div>
