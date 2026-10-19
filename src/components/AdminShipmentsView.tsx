@@ -404,6 +404,7 @@ export default function AdminShipmentsView({
             <option value="Picked Up">Picked Up</option>
             <option value="In Transit">In Transit</option>
             <option value="Out for Delivery">Out for Delivery</option>
+                  <option value="On Hold">On Hold</option>
             <option value="Delivered">Delivered</option>
             <option value="Cancelled">Cancelled</option>
           </select>
@@ -454,6 +455,7 @@ export default function AdminShipmentsView({
                   <option value="Picked Up">Picked Up</option>
                   <option value="In Transit">In Transit</option>
                   <option value="Out for Delivery">Out for Delivery</option>
+                  <option value="On Hold">On Hold</option>
                   <option value="Delivered">Delivered</option>
                   <option value="Cancelled">Cancelled</option>
                 </select>
