@@ -18,6 +18,7 @@ const normalizeShipmentStatus = (value: unknown): string => {
     PICKED_UP: 'Picked Up',
     IN_TRANSIT: 'In Transit',
     OUT_FOR_DELIVERY: 'Out for Delivery',
+    ON_HOLD: 'On Hold',
     DELIVERED: 'Delivered',
     CANCELLED: 'Cancelled',
     EXCEPTION: 'Exception',
@@ -268,9 +269,14 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
     }
   }, [shipment]);
 
+  // A shipment on hold must never keep simulated movement running.
+  useEffect(() => {
+    if (shipment?.status === 'On Hold' && isSimulating) setIsSimulating(false);
+  }, [shipment?.status, isSimulating]);
+
   // Simulation loop effect
   useEffect(() => {
-    if (!isSimulating || !shipment) return;
+    if (!isSimulating || !shipment || shipment.status === 'On Hold') return;
 
     const interval = setInterval(() => {
       setSimProgress((prev) => {
@@ -813,16 +819,20 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                   <div className={`p-3.5 rounded-full ${
                     shipment.status === 'Delivered'
                       ? 'bg-emerald-500 text-white'
+                      : shipment.status === 'On Hold'
+                      ? 'bg-orange-500 text-white'
                       : shipment.status === 'Cancelled'
                       ? 'bg-rose-500 text-white'
                       : 'bg-amber-500 text-slate-950 font-black animate-pulse'
                   }`}>
-                    {shipment.status === 'Delivered' ? <CheckCircle2 size={24} /> : <Truck size={24} />}
+                    {shipment.status === 'Delivered' ? <CheckCircle2 size={24} /> : shipment.status === 'On Hold' ? <Pause size={24} /> : <Truck size={24} />}
                   </div>
                   <div>
                     <span className="text-[9px] uppercase font-bold font-mono tracking-wider text-slate-300 block">Current Status</span>
                     <h2 className="text-2xl font-sans font-black text-white tracking-tight uppercase">
-                      {shipment.status === 'Delivered' ? 'Delivered' : 
+                      {shipment.status === 'On Hold' ? 'On Hold — Temporarily Paused' :
+                       shipment.status === 'Cancelled' ? 'Cancelled' :
+                       shipment.status === 'Delivered' ? 'Delivered' : 
                        shipment.status === 'Out for Delivery' ? 'Out for Delivery' :
                        shipment.status === 'In Transit' ? 'In Transit / On its way' : 
                        shipment.status === 'Picked Up' ? 'Picked Up / Traveling' : 'Shipment Created'}
@@ -830,6 +840,12 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                     <p className="text-xs text-slate-300">
                       Tracking view refreshed: {new Date().toLocaleTimeString()}
                     </p>
+                    {shipment.status === 'On Hold' && (
+                      <div role="status" className="mt-3 max-w-xl rounded-xl border border-orange-400/40 bg-orange-500/10 px-4 py-3 text-sm text-orange-200">
+                        <strong className="block text-orange-300">Shipment temporarily on hold</strong>
+                        Your shipment is paused while the logistics team reviews or resolves an issue. The latest updates below will refresh automatically when the status changes.
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1107,7 +1123,9 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                               <div className="space-y-1.5 flex-1 min-w-0 pr-4">
                                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                                   <span className={`font-bold rounded px-1.5 py-0.5 text-[9px] uppercase font-mono tracking-wider ${
-                                    event.status === 'Delivered' 
+                                    event.status === 'On Hold'
+                                      ? 'bg-orange-500/10 text-orange-300 border border-orange-500/30'
+                                      : event.status === 'Delivered' 
                                       ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-500/30' 
                                       : event.status === 'In Transit'
                                       ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
@@ -1241,7 +1259,7 @@ export default function PublicTracker({ initialTrackId, onClearTrackId, theme, s
                   {/* Simulated Play/Pause Toggle */}
                   {settings?.trackerShowSimulation !== false && (
                     <>
-                      {shipment.status !== 'Delivered' && shipment.status !== 'Cancelled' && (
+                      {shipment.status !== 'Delivered' && shipment.status !== 'Cancelled' && shipment.status !== 'On Hold' && (
                         <button
                           type="button"
                           onClick={() => {
