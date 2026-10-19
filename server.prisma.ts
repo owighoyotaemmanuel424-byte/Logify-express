@@ -367,7 +367,7 @@ app.post("/api/shipments", ...staffOnly, asyncRoute(async (req: AuthedRequest, r
 }));
 
 app.patch("/api/shipments/:id/status", ...staffOnly, asyncRoute(async (req: AuthedRequest, res) => {
-  const rawStatus = String(req.body?.status ?? "").trim().toUpperCase().replace(/[\\s-]+/g, "_");
+  const rawStatus = String(req.body?.status ?? "").trim().toUpperCase().replace(/[\s-]+/g, "_");
   const statusAliases: Record<string, string> = { PICKEDUP: "PICKED_UP", INTRANSIT: "IN_TRANSIT", OUTFORDELIVERY: "OUT_FOR_DELIVERY", ONHOLD: "ON_HOLD" };
   const status = statusAliases[rawStatus] || rawStatus;
   if (!Object.values(ShipmentStatus).includes(status as any)) return res.status(400).json({ error: "Invalid shipment status" });
