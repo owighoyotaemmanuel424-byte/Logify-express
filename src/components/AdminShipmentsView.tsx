@@ -13,6 +13,7 @@ const normalizeShipmentStatus = (value: unknown): string => {
     OUT_FOR_DELIVERY: 'Out for Delivery',
     DELIVERED: 'Delivered',
     CANCELLED: 'Cancelled',
+    ON_HOLD: 'On Hold',
     EXCEPTION: 'Exception',
   };
   return labels[raw] || String(value ?? 'Pending');
@@ -101,6 +102,10 @@ export default function AdminShipmentsView({
         return isHighContrast
           ? 'bg-amber-200 text-amber-950 border-amber-400 dark:bg-amber-400 dark:text-slate-950 dark:border-amber-300 font-black'
           : 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/40 font-bold';
+      case 'On Hold':
+        return isHighContrast
+          ? 'bg-orange-200 text-orange-950 border-orange-400 dark:bg-orange-400 dark:text-slate-950 dark:border-orange-300 font-black'
+          : 'bg-orange-100 text-orange-900 border-orange-300 dark:bg-orange-500/20 dark:text-orange-300 dark:border-orange-500/40 font-bold';
       case 'Delivered':
         return isHighContrast
           ? 'bg-emerald-200 text-emerald-950 border-emerald-400 dark:bg-emerald-400 dark:text-slate-950 dark:border-emerald-300 font-black'
@@ -249,6 +254,7 @@ export default function AdminShipmentsView({
                     <option value="Picked Up">Picked Up</option>
                     <option value="In Transit">In Transit</option>
                     <option value="Out for Delivery">Out for Delivery</option>
+            <option value="On Hold">On Hold</option>
                     <option value="Delivered">Delivered</option>
                     <option value="Cancelled">Cancelled</option>
                   </select>
