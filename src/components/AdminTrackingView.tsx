@@ -472,6 +472,7 @@ export default function AdminTrackingView({
                 <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold border uppercase tracking-wider ${
                   activeShipment.status === 'Delivered' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 
                   activeShipment.status === 'Cancelled' ? 'bg-rose-500/10 text-rose-500 border-rose-500/20' :
+                  activeShipment.status === 'On Hold' ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' :
                   'bg-blue-500/10 text-blue-500 border-blue-500/20'
                 }`}>
                   {activeShipment.status}
