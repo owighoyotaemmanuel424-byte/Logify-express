@@ -38,7 +38,7 @@ export interface Shipment {
   currentCoords: Coordinates;
   weight: number; // in kg
   type: 'Freight' | 'Express' | 'Standard' | 'Document' | 'Fragile';
-  status: 'Pending' | 'Picked Up' | 'In Transit' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
+  status: 'Pending' | 'Picked Up' | 'In Transit' | 'Out for Delivery' | 'Delivered' | 'On Hold' | 'Cancelled';
   price: number;
   assignedDriverId: string | null;
   timeline: TimelineEvent[];
